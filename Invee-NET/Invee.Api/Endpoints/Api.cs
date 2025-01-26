@@ -43,7 +43,7 @@ namespace Invee.Api.Endpoints
         /// <param name="group">Route Group</param>
         /// <param name="path">Resource URL</param>
         /// <returns>Command result</returns>
-        public static RouteGroupBuilder MapPostCommand<T>(this RouteGroupBuilder group, string path)
+        public static RouteGroupBuilder MapBodyPostCommand<T>(this RouteGroupBuilder group, string path)
             where T : class, IRequest<OperationResult>
         {
             group.MapPost(path, BodyDelegate<T>);
@@ -58,7 +58,7 @@ namespace Invee.Api.Endpoints
         /// <param name="group">Route Group</param>
         /// <param name="path">Resource URL</param>
         /// <returns>Command result</returns>
-        public static RouteGroupBuilder MapPutCommand<T>(this RouteGroupBuilder group, string path)
+        public static RouteGroupBuilder MapBodyPutCommand<T>(this RouteGroupBuilder group, string path)
             where T : class, IRequest<OperationResult>
         {
             group.MapPut(path, BodyDelegate<T>);
@@ -73,7 +73,7 @@ namespace Invee.Api.Endpoints
         /// <param name="group">Route Group</param>
         /// <param name="path">Resource URL</param>
         /// <returns>Command result</returns>
-        public static RouteGroupBuilder MapPatchCommand<T>(this RouteGroupBuilder group, string path)
+        public static RouteGroupBuilder MapBodyPatchCommand<T>(this RouteGroupBuilder group, string path)
             where T : class, IRequest<OperationResult>
         {
             group.MapPatch(path, BodyDelegate<T>);
@@ -88,7 +88,7 @@ namespace Invee.Api.Endpoints
         /// <param name="group">Route Group</param>
         /// <param name="path">Resource URL</param>
         /// <returns>Command result</returns>
-        public static RouteGroupBuilder MapDeleteCommand<T>(this RouteGroupBuilder group, string path)
+        public static RouteGroupBuilder MapBodyDeleteCommand<T>(this RouteGroupBuilder group, string path)
             where T : class, IRequest<OperationResult>
         {
             group.MapDelete(path, BodyDelegate<T>);
@@ -103,7 +103,7 @@ namespace Invee.Api.Endpoints
         /// <param name="group">Route Group</param>
         /// <param name="path">Resource URL</param>
         /// <returns>Command result</returns>
-        public static RouteGroupBuilder MapPostParamCommand<T>(this RouteGroupBuilder group, string path)
+        public static RouteGroupBuilder MapParamPostCommand<T>(this RouteGroupBuilder group, string path)
             where T : class, IRequest<OperationResult>
         {
             group.MapPost(path, ParametersDelegate<T>);
@@ -118,7 +118,7 @@ namespace Invee.Api.Endpoints
         /// <param name="group">Route Group</param>
         /// <param name="path">Resource URL</param>
         /// <returns>Command result</returns>
-        public static RouteGroupBuilder MapPutParamCommand<T>(this RouteGroupBuilder group, string path)
+        public static RouteGroupBuilder MapParamPutCommand<T>(this RouteGroupBuilder group, string path)
             where T : class, IRequest<OperationResult>
         {
             group.MapPut(path, ParametersDelegate<T>);
@@ -133,7 +133,7 @@ namespace Invee.Api.Endpoints
         /// <param name="group">Route Group</param>
         /// <param name="path">Resource URL</param>
         /// <returns>Command result</returns>
-        public static RouteGroupBuilder MapPatchParamCommand<T>(this RouteGroupBuilder group, string path)
+        public static RouteGroupBuilder MapParamPatchCommand<T>(this RouteGroupBuilder group, string path)
             where T : class, IRequest<OperationResult>
         {
             group.MapPatch(path, ParametersDelegate<T>);
@@ -148,7 +148,7 @@ namespace Invee.Api.Endpoints
         /// <param name="group">Route Group</param>
         /// <param name="path">Resource URL</param>
         /// <returns>Command result</returns>
-        public static RouteGroupBuilder MapDeleteParamCommand<T>(this RouteGroupBuilder group, string path)
+        public static RouteGroupBuilder MapParamDeleteCommand<T>(this RouteGroupBuilder group, string path)
             where T : class, IRequest<OperationResult>
         {
             group.MapDelete(path, ParametersDelegate<T>);
@@ -164,7 +164,7 @@ namespace Invee.Api.Endpoints
         /// <param name="group">Route Group</param>
         /// <param name="path">Resource URL</param>
         /// <returns>Command result</returns>
-        public static RouteGroupBuilder MapPostCommandWithParams<TParams, TBody>(this RouteGroupBuilder group, string path)
+        public static RouteGroupBuilder MapBodyAndParamPostCommand<TParams, TBody>(this RouteGroupBuilder group, string path)
             where TBody : class, TParams, IRequest<OperationResult>
             where TParams : class
         {
@@ -181,7 +181,7 @@ namespace Invee.Api.Endpoints
         /// <param name="group">Route Group</param>
         /// <param name="path">Resource URL</param>
         /// <returns>Command result</returns>
-        public static RouteGroupBuilder MapPutCommandWithParams<TParams, TBody>(this RouteGroupBuilder group, string path)
+        public static RouteGroupBuilder MapBodyAndParamPutCommand<TParams, TBody>(this RouteGroupBuilder group, string path)
             where TBody : class, TParams, IRequest<OperationResult>
             where TParams : class
         {
@@ -198,7 +198,7 @@ namespace Invee.Api.Endpoints
         /// <param name="group">Route Group</param>
         /// <param name="path">Resource URL</param>
         /// <returns>Command result</returns>
-        public static RouteGroupBuilder MapPatchCommandWithParams<TParams, TBody>(this RouteGroupBuilder group, string path)
+        public static RouteGroupBuilder MapBodyAndParamPatchCommand<TParams, TBody>(this RouteGroupBuilder group, string path)
             where TBody : class, TParams, IRequest<OperationResult>
             where TParams : class
         {
@@ -215,7 +215,7 @@ namespace Invee.Api.Endpoints
         /// <param name="group">Route Group</param>
         /// <param name="path">Resource URL</param>
         /// <returns>Command result</returns>
-        public static RouteGroupBuilder MapDeleteCommandWithParams<TParams, TBody>(this RouteGroupBuilder group, string path)
+        public static RouteGroupBuilder MapBodyAndParamDeleteCommand<TParams, TBody>(this RouteGroupBuilder group, string path)
             where TBody : class, TParams, IRequest<OperationResult>
             where TParams : class
         {
@@ -234,7 +234,7 @@ namespace Invee.Api.Endpoints
         /// <param name="group">Route Group</param>
         /// <param name="path">Resource URL</param>
         /// <returns>Command result</returns>
-        public static RouteGroupBuilder MapPostCommand<T, TResponse>(this RouteGroupBuilder group, string path)
+        public static RouteGroupBuilder MapBodyPostCommand<T, TResponse>(this RouteGroupBuilder group, string path)
             where T : class, IRequest<OperationResult<TResponse>>
         {
             group.MapPost(path, BodyDelegate<T, TResponse>);
@@ -250,7 +250,7 @@ namespace Invee.Api.Endpoints
         /// <param name="group">Route Group</param>
         /// <param name="path">Resource URL</param>
         /// <returns>Command result</returns>
-        public static RouteGroupBuilder MapPutCommand<T, TResponse>(this RouteGroupBuilder group, string path)
+        public static RouteGroupBuilder MapBodyPutCommand<T, TResponse>(this RouteGroupBuilder group, string path)
             where T : class, IRequest<OperationResult<TResponse>>
         {
             group.MapPut(path, BodyDelegate<T, TResponse>);
@@ -266,7 +266,7 @@ namespace Invee.Api.Endpoints
         /// <param name="group">Route Group</param>
         /// <param name="path">Resource URL</param>
         /// <returns>Command result</returns>
-        public static RouteGroupBuilder MapPatchCommand<T, TResponse>(this RouteGroupBuilder group, string path)
+        public static RouteGroupBuilder MapBodyPatchCommand<T, TResponse>(this RouteGroupBuilder group, string path)
             where T : class, IRequest<OperationResult<TResponse>>
         {
             group.MapPatch(path, BodyDelegate<T, TResponse>);
@@ -282,7 +282,7 @@ namespace Invee.Api.Endpoints
         /// <param name="group">Route Group</param>
         /// <param name="path">Resource URL</param>
         /// <returns>Command result</returns>
-        public static RouteGroupBuilder MapDeleteCommand<T, TResponse>(this RouteGroupBuilder group, string path)
+        public static RouteGroupBuilder MapBodyDeleteCommand<T, TResponse>(this RouteGroupBuilder group, string path)
             where T : class, IRequest<OperationResult<TResponse>>
         {
             group.MapDelete(path, BodyDelegate<T, TResponse>);
@@ -298,7 +298,7 @@ namespace Invee.Api.Endpoints
         /// <param name="group">Route Group</param>
         /// <param name="path">Resource URL</param>
         /// <returns>Command result</returns>
-        public static RouteGroupBuilder MapPostParamCommand<T, TResponse>(this RouteGroupBuilder group, string path)
+        public static RouteGroupBuilder MapParamPostCommand<T, TResponse>(this RouteGroupBuilder group, string path)
             where T : class, IRequest<OperationResult<TResponse>>
         {
             group.MapPost(path, ParametersDelegate<T, TResponse>);
@@ -314,7 +314,7 @@ namespace Invee.Api.Endpoints
         /// <param name="group">Route Group</param>
         /// <param name="path">Resource URL</param>
         /// <returns>Command result</returns>
-        public static RouteGroupBuilder MapPutParamCommand<T, TResponse>(this RouteGroupBuilder group, string path)
+        public static RouteGroupBuilder MapParamPutCommand<T, TResponse>(this RouteGroupBuilder group, string path)
             where T : class, IRequest<OperationResult<TResponse>>
         {
             group.MapPut(path, ParametersDelegate<T, TResponse>);
@@ -330,7 +330,7 @@ namespace Invee.Api.Endpoints
         /// <param name="group">Route Group</param>
         /// <param name="path">Resource URL</param>
         /// <returns>Command result</returns>
-        public static RouteGroupBuilder MapPatchParamCommand<T, TResponse>(this RouteGroupBuilder group, string path)
+        public static RouteGroupBuilder MapParamPatchCommand<T, TResponse>(this RouteGroupBuilder group, string path)
             where T : class, IRequest<OperationResult<TResponse>>
         {
             group.MapPatch(path, ParametersDelegate<T, TResponse>);
@@ -346,7 +346,7 @@ namespace Invee.Api.Endpoints
         /// <param name="group">Route Group</param>
         /// <param name="path">Resource URL</param>
         /// <returns>Command result</returns>
-        public static RouteGroupBuilder MapDeleteParamCommand<T,TResponse>(this RouteGroupBuilder group, string path)
+        public static RouteGroupBuilder MapParamDeleteCommand<T,TResponse>(this RouteGroupBuilder group, string path)
             where T : class, IRequest<OperationResult<TResponse>>
         {
             group.MapDelete(path, ParametersDelegate<T, TResponse>);
@@ -363,7 +363,7 @@ namespace Invee.Api.Endpoints
         /// <param name="group">Route Group</param>
         /// <param name="path">Resource URL</param>
         /// <returns>Command result</returns>
-        public static RouteGroupBuilder MapPostCommandWithParams<TParams, TBody, TResponse>(this RouteGroupBuilder group, string path)
+        public static RouteGroupBuilder MapBodyAndParamPostCommand<TParams, TBody, TResponse>(this RouteGroupBuilder group, string path)
             where TBody : class, TParams, IRequest<OperationResult<TResponse>>
             where TParams : class
         {
@@ -381,7 +381,7 @@ namespace Invee.Api.Endpoints
         /// <param name="group">Route Group</param>
         /// <param name="path">Resource URL</param>
         /// <returns>Command result</returns>
-        public static RouteGroupBuilder MapPutCommandWithParams<TParams, TBody, TResponse>(this RouteGroupBuilder group, string path)
+        public static RouteGroupBuilder MapBodyAndParamPutCommand<TParams, TBody, TResponse>(this RouteGroupBuilder group, string path)
             where TBody : class, TParams, IRequest<OperationResult<TResponse>>
             where TParams : class
         {
@@ -399,7 +399,7 @@ namespace Invee.Api.Endpoints
         /// <param name="group">Route Group</param>
         /// <param name="path">Resource URL</param>
         /// <returns>Command result</returns>
-        public static RouteGroupBuilder MapPatchCommandWithParams<TParams, TBody, TResponse>(this RouteGroupBuilder group, string path)
+        public static RouteGroupBuilder MapBodyAndParamPatchCommand<TParams, TBody, TResponse>(this RouteGroupBuilder group, string path)
             where TBody : class, TParams, IRequest<OperationResult<TResponse>>
             where TParams : class
         {
@@ -417,7 +417,7 @@ namespace Invee.Api.Endpoints
         /// <param name="group">Route Group</param>
         /// <param name="path">Resource URL</param>
         /// <returns>Command result</returns>
-        public static RouteGroupBuilder MapDeleteCommandWithParams<TParams, TBody, TResponse>(this RouteGroupBuilder group, string path)
+        public static RouteGroupBuilder MapBodyAndParamDeleteCommand<TParams, TBody, TResponse>(this RouteGroupBuilder group, string path)
             where TBody : class, TParams, IRequest<OperationResult<TResponse>>
             where TParams : class
         {

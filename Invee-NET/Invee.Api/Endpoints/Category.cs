@@ -16,10 +16,10 @@ namespace Invee.Api.Endpoints
             group.WithTags("Categories");
             group.MapQuery<GetCategories, List<CategoryTreeResponse>>("/");
             group.MapQuery<GetCategory, Data.Database.Model.Category>("/{id:int}");
-            group.MapPostCommand<CreateCategory, int>("/");
-            group.MapDeleteParamCommand<DeleteCategory>("/{id:int}");
-            group.MapPutCommandWithParams<IdParameter, RenameCategory>("/{id:int}");
-            group.MapPostParamCommand<SetCategoryParent>("/{id:int}/setParent/{parentId:int?}");
+            group.MapBodyPostCommand<CreateCategory, int>("/");
+            group.MapParamDeleteCommand<DeleteCategory>("/{id:int}");
+            group.MapBodyAndParamPutCommand<IdParameter, RenameCategory>("/{id:int}");
+            group.MapParamPostCommand<SetCategoryParent>("/{id:int}/setParent/{parentId:int?}");
             return group;
         }
     }
