@@ -1,0 +1,6 @@
+@Invee.Api_HostAddress = http://localhost:5231
+
+GET {{Invee.Api_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###

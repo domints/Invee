@@ -1,0 +1,24 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
+using Invee.Application.Models;
+using Invee.Application.Models.DTOs;
+using Invee.Application.Queries.CategoryCommands;
+using Invee.Application.Queries.CategoryQueries;
+
+namespace Invee.Api.Endpoints
+{
+    public static class Category
+    {
+        public static RouteGroupBuilder MapCategories(this RouteGroupBuilder group)
+        {
+            group.MapQuery<GetCategories, List<CategoryTreeResponse>>("/");
+            group.MapQuery<GetCategory, Data.Database.Model.Category>("/{id:int}");
+            group.MapPostCommand<CreateCategory, int>("/");
+            group.MapDeleteParamCommand<DeleteCategory>("/{id:int}");
+            group.MapPutCommandWithParams<IdParameter, RenameCategory>("/{id:int}");
+            return group;
+        }
+    }
+}
