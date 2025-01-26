@@ -6,8 +6,9 @@ using Invee.Application.Models;
 using Invee.Data.Database;
 using Invee.Data.Database.Model;
 using MediatR;
+using Microsoft.EntityFrameworkCore;
 
-namespace Invee.Application.Queries.CategoryCommands
+namespace Invee.Application.Commands.CategoryCommands
 {
     public class CreateCategoryHandler : IRequestHandler<CreateCategory, OperationResult<int>>
     {
@@ -25,6 +26,9 @@ namespace Invee.Application.Queries.CategoryCommands
             var isDuplicate = _db.Categories.Any(c => c.Name == request.Name);
             if (isDuplicate)
                 return OperationResult<int>.Fail(["Category with such name already exists"]);
+            var parentExists = !request.ParentId.HasValue || await _db.Categories.AnyAsync(c => c.Id == request.ParentId);
+            if (!parentExists)
+                return OperationResult<int>.NotFound();
 
             var newCategory = new Category
             {

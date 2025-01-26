@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 using Invee.Application.Models;
 using MediatR;
 
-namespace Invee.Application.Queries.CategoryCommands
+namespace Invee.Application.Commands.CategoryCommands
 {
     public record RenameCategory(int Id, string Name) : IdParameter(Id), IRequest<OperationResult>;
 }

@@ -5,7 +5,7 @@ using System.Threading.Tasks;
 using Invee.Application.Models;
 using MediatR;
 
-namespace Invee.Application.Queries.CategoryCommands
+namespace Invee.Application.Commands.CategoryCommands
 {
     public record CreateCategory(string Name, int? ParentId) : IRequest<OperationResult<int>>;
 }

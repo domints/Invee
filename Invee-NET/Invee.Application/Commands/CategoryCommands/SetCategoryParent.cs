@@ -7,5 +7,5 @@ using MediatR;
 
 namespace Invee.Application.Commands.CategoryCommands
 {
-    public record DeleteCategory(int Id) : IRequest<OperationResult>;
+    public record SetCategoryParent(int Id, int? ParentId) : IRequest<OperationResult>;
 }

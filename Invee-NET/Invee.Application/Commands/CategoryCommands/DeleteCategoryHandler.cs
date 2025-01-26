@@ -7,7 +7,7 @@ using Invee.Data.Database;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 
-namespace Invee.Application.Queries.CategoryCommands
+namespace Invee.Application.Commands.CategoryCommands
 {
     public class DeleteCategoryHandler : IRequestHandler<DeleteCategory, OperationResult>
     {
