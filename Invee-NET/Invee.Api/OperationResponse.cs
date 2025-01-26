@@ -23,28 +23,28 @@ namespace Invee.Api
         {
             if (result.IsNotFound)
             {
-                return TypedResults.NotFound(new OperationResponse());
+                return TypedResults.NotFound(new OperationResponse { Errors = result.Errors });
             }
             if (!result.IsOk)
             {
-                return TypedResults.BadRequest(new OperationResponse());
+                return TypedResults.BadRequest(new OperationResponse { Errors = result.Errors });
             }
 
-            return TypedResults.Ok(new OperationResponse());
+            return TypedResults.Ok(new OperationResponse { Errors = result.Errors });
         }
 
         public static Results<Ok<OperationResponse<T>>, BadRequest<OperationResponse<T>>, NotFound<OperationResponse<T>>> ToResponse<T>(this OperationResult<T> result)
         {
             if (result.IsNotFound)
             {
-                return TypedResults.NotFound(new OperationResponse<T> { Data = result.Data });
+                return TypedResults.NotFound(new OperationResponse<T> { Data = result.Data, Errors = result.Errors });
             }
             if (!result.IsOk)
             {
-                return TypedResults.BadRequest(new OperationResponse<T> { Data = result.Data});
+                return TypedResults.BadRequest(new OperationResponse<T> { Data = result.Data, Errors = result.Errors});
             }
 
-            return TypedResults.Ok(new OperationResponse<T> { Data = result.Data });
+            return TypedResults.Ok(new OperationResponse<T> { Data = result.Data, Errors = result.Errors});
         }
     }
 }

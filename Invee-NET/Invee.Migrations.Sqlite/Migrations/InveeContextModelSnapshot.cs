@@ -48,8 +48,9 @@ namespace Invee.Migrations.Sqlite.Migrations
                     b.Property<int>("CategoryId")
                         .HasColumnType("INTEGER");
 
-                    b.Property<int>("Name")
-                        .HasColumnType("INTEGER");
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
 
                     b.Property<string>("Note")
                         .HasColumnType("TEXT");

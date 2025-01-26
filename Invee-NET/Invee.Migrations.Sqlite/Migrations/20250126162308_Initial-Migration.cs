@@ -5,7 +5,7 @@
 namespace Invee.Migrations.Sqlite.Migrations
 {
     /// <inheritdoc />
-    public partial class Initial : Migration
+    public partial class InitialMigration : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -17,7 +17,8 @@ namespace Invee.Migrations.Sqlite.Migrations
                     Id = table.Column<int>(type: "INTEGER", nullable: false)
                         .Annotation("Sqlite:Autoincrement", true),
                     ParentId = table.Column<int>(type: "INTEGER", nullable: true),
-                    Name = table.Column<string>(type: "TEXT", nullable: false)
+                    Name = table.Column<string>(type: "TEXT", nullable: false),
+                    Slug = table.Column<string>(type: "TEXT", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -50,7 +51,8 @@ namespace Invee.Migrations.Sqlite.Migrations
                         .Annotation("Sqlite:Autoincrement", true),
                     ParentId = table.Column<int>(type: "INTEGER", nullable: true),
                     TypeId = table.Column<int>(type: "INTEGER", nullable: false),
-                    Name = table.Column<string>(type: "TEXT", nullable: false)
+                    Name = table.Column<string>(type: "TEXT", nullable: false),
+                    Slug = table.Column<string>(type: "TEXT", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -69,10 +71,13 @@ namespace Invee.Migrations.Sqlite.Migrations
                 {
                     Id = table.Column<int>(type: "INTEGER", nullable: false)
                         .Annotation("Sqlite:Autoincrement", true),
-                    Name = table.Column<int>(type: "INTEGER", nullable: false),
+                    Name = table.Column<string>(type: "TEXT", nullable: false),
                     CategoryId = table.Column<int>(type: "INTEGER", nullable: false),
                     StorageId = table.Column<int>(type: "INTEGER", nullable: false),
-                    Quantity = table.Column<decimal>(type: "TEXT", nullable: true)
+                    Quantity = table.Column<decimal>(type: "TEXT", nullable: true),
+                    QuantityType = table.Column<int>(type: "INTEGER", nullable: false),
+                    Note = table.Column<string>(type: "TEXT", nullable: true),
+                    Slug = table.Column<string>(type: "TEXT", nullable: true)
                 },
                 constraints: table =>
                 {

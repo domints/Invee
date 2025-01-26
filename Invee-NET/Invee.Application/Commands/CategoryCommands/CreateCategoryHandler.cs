@@ -29,6 +29,13 @@ namespace Invee.Application.Commands.CategoryCommands
             var parentExists = !request.ParentId.HasValue || await _db.Categories.AnyAsync(c => c.Id == request.ParentId);
             if (!parentExists)
                 return OperationResult<int>.NotFound();
+            
+            if (request.Slug != null)
+            {
+                var slugDuplicate = _db.Categories.Any(c => c.Slug == request.Slug);
+                if (slugDuplicate)
+                    return OperationResult<int>.Fail(["Category with such slug already exists"]);
+            }
 
             var newCategory = new Category
             {

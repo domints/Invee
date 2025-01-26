@@ -13,10 +13,10 @@ namespace Invee.Api.Endpoints
     {
         public static RouteGroupBuilder MapApis(this RouteGroupBuilder group)
         {
-            group.MapGet("/XD", (HttpContext cx) => {
-                Results.Ok("XDDD");
-            });
             group.MapGroup("/categories").MapCategories();
+            group.MapGroup("/storageTypes").MapStorageTypes();
+            group.MapGroup("/storages").MapStorages();
+            group.MapGroup("/items").MapItems();
 
             return group;
         }

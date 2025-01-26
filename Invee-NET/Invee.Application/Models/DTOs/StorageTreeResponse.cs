@@ -3,17 +3,13 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
-namespace Invee.Data.Database.Model
+namespace Invee.Application.Models.DTOs
 {
-    public class Storage
+    public class StorageTreeResponse
     {
         public int Id { get; set; }
         public int? ParentId { get; set; }
-        public int TypeId { get; set; }
-
         public required string Name { get; set; }
-        public string? Slug { get; set; }
-        
-        public virtual StorageType? Type { get; set; }
+        public List<StorageTreeResponse> Children { get; set; } = new List<StorageTreeResponse>();
     }
 }

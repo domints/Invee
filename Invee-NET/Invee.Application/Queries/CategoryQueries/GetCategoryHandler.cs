@@ -18,6 +18,7 @@ namespace Invee.Application.Queries.CategoryQueries
         {
             _db = db;
         }
+        
         public async Task<OperationResult<Category>> Handle(GetCategory request, CancellationToken cancellationToken)
         {
             var result = await _db.Categories.Where(c => c.Id == request.Id).FirstOrDefaultAsync(cancellationToken: cancellationToken);

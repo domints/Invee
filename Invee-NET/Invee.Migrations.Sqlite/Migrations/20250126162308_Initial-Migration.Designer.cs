@@ -10,8 +10,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Invee.Migrations.Sqlite.Migrations
 {
     [DbContext(typeof(InveeContext))]
-    [Migration("20250126070030_AddQuantityTypeAndNote")]
-    partial class AddQuantityTypeAndNote
+    [Migration("20250126162308_Initial-Migration")]
+    partial class InitialMigration
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -32,6 +32,9 @@ namespace Invee.Migrations.Sqlite.Migrations
                     b.Property<int?>("ParentId")
                         .HasColumnType("INTEGER");
 
+                    b.Property<string>("Slug")
+                        .HasColumnType("TEXT");
+
                     b.HasKey("Id");
 
                     b.HasIndex("ParentId");
@@ -48,8 +51,9 @@ namespace Invee.Migrations.Sqlite.Migrations
                     b.Property<int>("CategoryId")
                         .HasColumnType("INTEGER");
 
-                    b.Property<int>("Name")
-                        .HasColumnType("INTEGER");
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
 
                     b.Property<string>("Note")
                         .HasColumnType("TEXT");
@@ -59,6 +63,9 @@ namespace Invee.Migrations.Sqlite.Migrations
 
                     b.Property<int>("QuantityType")
                         .HasColumnType("INTEGER");
+
+                    b.Property<string>("Slug")
+                        .HasColumnType("TEXT");
 
                     b.Property<int>("StorageId")
                         .HasColumnType("INTEGER");
@@ -84,6 +91,9 @@ namespace Invee.Migrations.Sqlite.Migrations
 
                     b.Property<int?>("ParentId")
                         .HasColumnType("INTEGER");
+
+                    b.Property<string>("Slug")
+                        .HasColumnType("TEXT");
 
                     b.Property<int>("TypeId")
                         .HasColumnType("INTEGER");
