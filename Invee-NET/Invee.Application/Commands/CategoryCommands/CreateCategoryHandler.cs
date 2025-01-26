@@ -33,7 +33,8 @@ namespace Invee.Application.Commands.CategoryCommands
             var newCategory = new Category
             {
                 Name = request.Name,
-                ParentId = request.ParentId
+                ParentId = request.ParentId,
+                Slug = request.Slug
             };
 
             _db.Categories.Add(newCategory);

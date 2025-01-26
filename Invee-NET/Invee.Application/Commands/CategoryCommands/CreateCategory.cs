@@ -7,5 +7,5 @@ using MediatR;
 
 namespace Invee.Application.Commands.CategoryCommands
 {
-    public record CreateCategory(string Name, int? ParentId) : IRequest<OperationResult<int>>;
+    public record CreateCategory(string Name, int? ParentId, string? Slug) : IRequest<OperationResult<int>>;
 }

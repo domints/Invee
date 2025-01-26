@@ -11,6 +11,8 @@ namespace Invee.Data.Database.Model
         public int? ParentId { get; set; }
         public required string Name { get; set; }
 
+        public string? Slug { get; set; }
+
         public virtual Category? Parent { get; set; }
         public virtual ICollection<Category> Children { get; set; } = [];
 

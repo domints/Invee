@@ -15,6 +15,7 @@ namespace Invee.Data.Database.Model
         public decimal? Quantity { get; set; }
         public QuantityType QuantityType { get; set; }
         public string? Note { get; set; }
+        public string? Slug { get; set; }
 
         public required virtual Category Category { get; set; }
         public required virtual Storage Storage { get; set; }
