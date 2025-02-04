@@ -2,7 +2,9 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Invee.Application.Consts;
 using Invee.Application.Models;
+using Invee.Application.Models.DTOs;
 using Invee.Data.Database;
 using Invee.Data.Database.Model;
 using MediatR;
@@ -21,10 +23,10 @@ namespace Invee.Application.Commands.StorageTypeCommands
         public async Task<OperationResult<int>> Handle(CreateStorageType request, CancellationToken cancellationToken)
         {
             if (string.IsNullOrWhiteSpace(request.Name))
-                return OperationResult<int>.Fail(["Storage type name cannot be empty"]);
+                return OperationResult<int>.Fail(Errors.NameEmpty());
             var isDuplicate = _db.StorageTypes.Any(c => c.Name == request.Name);
             if (isDuplicate)
-                return OperationResult<int>.Fail(["Storage type with such name already exists"]);
+                return OperationResult<int>.Fail(Errors.NameDuplicate(nameof(StorageType)));
 
             var entity = new StorageType
             {

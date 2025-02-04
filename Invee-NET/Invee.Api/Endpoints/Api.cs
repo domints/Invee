@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Invee.Api.Models;
 using Invee.Application.Models;
 using MediatR;
 using Microsoft.AspNetCore.Http.HttpResults;
@@ -13,6 +14,7 @@ namespace Invee.Api.Endpoints
     {
         public static RouteGroupBuilder MapApis(this RouteGroupBuilder group)
         {
+            group.MapGet("/auth", (string redirect) => Results.Redirect(redirect));
             group.MapGroup("/categories").MapCategories();
             group.MapGroup("/storageTypes").MapStorageTypes();
             group.MapGroup("/storages").MapStorages();
@@ -31,7 +33,7 @@ namespace Invee.Api.Endpoints
         public static RouteGroupBuilder MapQuery<T, TResponse>(this RouteGroupBuilder group, string path)
             where T : IRequest<OperationResult<TResponse>>
         {
-            group.MapGet(path, ParametersDelegate<T, TResponse>);
+            group.MapGet(path, ParametersDelegate<T, TResponse>).WithName(GetEndpointName<T>());
 
             return group;
         }
@@ -46,7 +48,7 @@ namespace Invee.Api.Endpoints
         public static RouteGroupBuilder MapBodyPostCommand<T>(this RouteGroupBuilder group, string path)
             where T : class, IRequest<OperationResult>
         {
-            group.MapPost(path, BodyDelegate<T>);
+            group.MapPost(path, BodyDelegate<T>).WithName(GetEndpointName<T>());
 
             return group;
         }
@@ -61,7 +63,7 @@ namespace Invee.Api.Endpoints
         public static RouteGroupBuilder MapBodyPutCommand<T>(this RouteGroupBuilder group, string path)
             where T : class, IRequest<OperationResult>
         {
-            group.MapPut(path, BodyDelegate<T>);
+            group.MapPut(path, BodyDelegate<T>).WithName(GetEndpointName<T>());
 
             return group;
         }
@@ -76,7 +78,7 @@ namespace Invee.Api.Endpoints
         public static RouteGroupBuilder MapBodyPatchCommand<T>(this RouteGroupBuilder group, string path)
             where T : class, IRequest<OperationResult>
         {
-            group.MapPatch(path, BodyDelegate<T>);
+            group.MapPatch(path, BodyDelegate<T>).WithName(GetEndpointName<T>());
 
             return group;
         }
@@ -91,7 +93,7 @@ namespace Invee.Api.Endpoints
         public static RouteGroupBuilder MapBodyDeleteCommand<T>(this RouteGroupBuilder group, string path)
             where T : class, IRequest<OperationResult>
         {
-            group.MapDelete(path, BodyDelegate<T>);
+            group.MapDelete(path, BodyDelegate<T>).WithName(GetEndpointName<T>());
 
             return group;
         }
@@ -106,7 +108,7 @@ namespace Invee.Api.Endpoints
         public static RouteGroupBuilder MapParamPostCommand<T>(this RouteGroupBuilder group, string path)
             where T : class, IRequest<OperationResult>
         {
-            group.MapPost(path, ParametersDelegate<T>);
+            group.MapPost(path, ParametersDelegate<T>).WithName(GetEndpointName<T>());
 
             return group;
         }
@@ -121,7 +123,7 @@ namespace Invee.Api.Endpoints
         public static RouteGroupBuilder MapParamPutCommand<T>(this RouteGroupBuilder group, string path)
             where T : class, IRequest<OperationResult>
         {
-            group.MapPut(path, ParametersDelegate<T>);
+            group.MapPut(path, ParametersDelegate<T>).WithName(GetEndpointName<T>());
 
             return group;
         }
@@ -136,7 +138,7 @@ namespace Invee.Api.Endpoints
         public static RouteGroupBuilder MapParamPatchCommand<T>(this RouteGroupBuilder group, string path)
             where T : class, IRequest<OperationResult>
         {
-            group.MapPatch(path, ParametersDelegate<T>);
+            group.MapPatch(path, ParametersDelegate<T>).WithName(GetEndpointName<T>());
 
             return group;
         }
@@ -151,7 +153,7 @@ namespace Invee.Api.Endpoints
         public static RouteGroupBuilder MapParamDeleteCommand<T>(this RouteGroupBuilder group, string path)
             where T : class, IRequest<OperationResult>
         {
-            group.MapDelete(path, ParametersDelegate<T>);
+            group.MapDelete(path, ParametersDelegate<T>).WithName(GetEndpointName<T>());
 
             return group;
         }
@@ -168,7 +170,7 @@ namespace Invee.Api.Endpoints
             where TBody : class, TParams, IRequest<OperationResult>
             where TParams : class
         {
-            group.MapPost(path, ParametersAndBodyDelegate<TParams, TBody>);
+            group.MapPost(path, ParametersAndBodyDelegate<TParams, TBody>).WithName(GetEndpointName<TBody>());
 
             return group;
         }
@@ -185,7 +187,7 @@ namespace Invee.Api.Endpoints
             where TBody : class, TParams, IRequest<OperationResult>
             where TParams : class
         {
-            group.MapPut(path, ParametersAndBodyDelegate<TParams, TBody>);
+            group.MapPut(path, ParametersAndBodyDelegate<TParams, TBody>).WithName(GetEndpointName<TBody>());
 
             return group;
         }
@@ -202,7 +204,7 @@ namespace Invee.Api.Endpoints
             where TBody : class, TParams, IRequest<OperationResult>
             where TParams : class
         {
-            group.MapPatch(path, ParametersAndBodyDelegate<TParams, TBody>);
+            group.MapPatch(path, ParametersAndBodyDelegate<TParams, TBody>).WithName(GetEndpointName<TBody>());
 
             return group;
         }
@@ -219,7 +221,7 @@ namespace Invee.Api.Endpoints
             where TBody : class, TParams, IRequest<OperationResult>
             where TParams : class
         {
-            group.MapDelete(path, ParametersAndBodyDelegate<TParams, TBody>);
+            group.MapDelete(path, ParametersAndBodyDelegate<TParams, TBody>).WithName(GetEndpointName<TBody>());
 
             return group;
         }
@@ -237,7 +239,7 @@ namespace Invee.Api.Endpoints
         public static RouteGroupBuilder MapBodyPostCommand<T, TResponse>(this RouteGroupBuilder group, string path)
             where T : class, IRequest<OperationResult<TResponse>>
         {
-            group.MapPost(path, BodyDelegate<T, TResponse>);
+            group.MapPost(path, BodyDelegate<T, TResponse>).WithName(GetEndpointName<T>());
 
             return group;
         }
@@ -253,7 +255,7 @@ namespace Invee.Api.Endpoints
         public static RouteGroupBuilder MapBodyPutCommand<T, TResponse>(this RouteGroupBuilder group, string path)
             where T : class, IRequest<OperationResult<TResponse>>
         {
-            group.MapPut(path, BodyDelegate<T, TResponse>);
+            group.MapPut(path, BodyDelegate<T, TResponse>).WithName(GetEndpointName<T>());
 
             return group;
         }
@@ -269,7 +271,7 @@ namespace Invee.Api.Endpoints
         public static RouteGroupBuilder MapBodyPatchCommand<T, TResponse>(this RouteGroupBuilder group, string path)
             where T : class, IRequest<OperationResult<TResponse>>
         {
-            group.MapPatch(path, BodyDelegate<T, TResponse>);
+            group.MapPatch(path, BodyDelegate<T, TResponse>).WithName(GetEndpointName<T>());
 
             return group;
         }
@@ -285,7 +287,7 @@ namespace Invee.Api.Endpoints
         public static RouteGroupBuilder MapBodyDeleteCommand<T, TResponse>(this RouteGroupBuilder group, string path)
             where T : class, IRequest<OperationResult<TResponse>>
         {
-            group.MapDelete(path, BodyDelegate<T, TResponse>);
+            group.MapDelete(path, BodyDelegate<T, TResponse>).WithName(GetEndpointName<T>());
 
             return group;
         }
@@ -301,7 +303,7 @@ namespace Invee.Api.Endpoints
         public static RouteGroupBuilder MapParamPostCommand<T, TResponse>(this RouteGroupBuilder group, string path)
             where T : class, IRequest<OperationResult<TResponse>>
         {
-            group.MapPost(path, ParametersDelegate<T, TResponse>);
+            group.MapPost(path, ParametersDelegate<T, TResponse>).WithName(GetEndpointName<T>());
 
             return group;
         }
@@ -317,7 +319,7 @@ namespace Invee.Api.Endpoints
         public static RouteGroupBuilder MapParamPutCommand<T, TResponse>(this RouteGroupBuilder group, string path)
             where T : class, IRequest<OperationResult<TResponse>>
         {
-            group.MapPut(path, ParametersDelegate<T, TResponse>);
+            group.MapPut(path, ParametersDelegate<T, TResponse>).WithName(GetEndpointName<T>());
 
             return group;
         }
@@ -333,7 +335,7 @@ namespace Invee.Api.Endpoints
         public static RouteGroupBuilder MapParamPatchCommand<T, TResponse>(this RouteGroupBuilder group, string path)
             where T : class, IRequest<OperationResult<TResponse>>
         {
-            group.MapPatch(path, ParametersDelegate<T, TResponse>);
+            group.MapPatch(path, ParametersDelegate<T, TResponse>).WithName(GetEndpointName<T>());
 
             return group;
         }
@@ -349,7 +351,7 @@ namespace Invee.Api.Endpoints
         public static RouteGroupBuilder MapParamDeleteCommand<T,TResponse>(this RouteGroupBuilder group, string path)
             where T : class, IRequest<OperationResult<TResponse>>
         {
-            group.MapDelete(path, ParametersDelegate<T, TResponse>);
+            group.MapDelete(path, ParametersDelegate<T, TResponse>).WithName(GetEndpointName<T>());
 
             return group;
         }
@@ -367,7 +369,7 @@ namespace Invee.Api.Endpoints
             where TBody : class, TParams, IRequest<OperationResult<TResponse>>
             where TParams : class
         {
-            group.MapPost(path, ParametersAndBodyDelegate<TParams, TBody, TResponse>);
+            group.MapPost(path, ParametersAndBodyDelegate<TParams, TBody, TResponse>).WithName(GetEndpointName<TBody>());
 
             return group;
         }
@@ -385,7 +387,7 @@ namespace Invee.Api.Endpoints
             where TBody : class, TParams, IRequest<OperationResult<TResponse>>
             where TParams : class
         {
-            group.MapPut(path, ParametersAndBodyDelegate<TParams, TBody, TResponse>);
+            group.MapPut(path, ParametersAndBodyDelegate<TParams, TBody, TResponse>).WithName(GetEndpointName<TBody>());
 
             return group;
         }
@@ -403,7 +405,7 @@ namespace Invee.Api.Endpoints
             where TBody : class, TParams, IRequest<OperationResult<TResponse>>
             where TParams : class
         {
-            group.MapPatch(path, ParametersAndBodyDelegate<TParams, TBody, TResponse>);
+            group.MapPatch(path, ParametersAndBodyDelegate<TParams, TBody, TResponse>).WithName(GetEndpointName<TBody>());
 
             return group;
         }
@@ -421,14 +423,14 @@ namespace Invee.Api.Endpoints
             where TBody : class, TParams, IRequest<OperationResult<TResponse>>
             where TParams : class
         {
-            group.MapDelete(path, ParametersAndBodyDelegate<TParams, TBody, TResponse>);
+            group.MapDelete(path, ParametersAndBodyDelegate<TParams, TBody, TResponse>).WithName(GetEndpointName<TBody>());
 
             return group;
         }
 
         #endregion
 
-        private static async Task<Results<Ok<OperationResponse>, BadRequest<OperationResponse>, NotFound<OperationResponse>>> ParametersDelegate<TParams>([AsParameters] TParams parameters, IMediator mediator, CancellationToken cancellationToken)
+        private static async Task<Results<Ok, BadRequest<ErrorResponse>, NotFound<NotFoundResponse>>> ParametersDelegate<TParams>([AsParameters] TParams parameters, IMediator mediator, CancellationToken cancellationToken)
             where TParams : IRequest<OperationResult>
         {
             var result = await mediator.Send(parameters, cancellationToken);
@@ -436,7 +438,7 @@ namespace Invee.Api.Endpoints
             return result.ToResponse();
         }
 
-        private static async Task<Results<Ok<OperationResponse>, BadRequest<OperationResponse>, NotFound<OperationResponse>>> BodyDelegate<TBody>([FromBody] TBody parameters, IMediator mediator, CancellationToken cancellationToken)
+        private static async Task<Results<Ok, BadRequest<ErrorResponse>, NotFound<NotFoundResponse>>> BodyDelegate<TBody>([FromBody] TBody parameters, IMediator mediator, CancellationToken cancellationToken)
             where TBody : IRequest<OperationResult>
         {
             var result = await mediator.Send(parameters, cancellationToken);
@@ -444,7 +446,7 @@ namespace Invee.Api.Endpoints
             return result.ToResponse();
         }
 
-        private static async Task<Results<Ok<OperationResponse>, BadRequest<OperationResponse>, NotFound<OperationResponse>>> ParametersAndBodyDelegate<TParams, TBody>([AsParameters] TParams parameters, [FromBody] TBody body, IMediator mediator, CancellationToken cancellationToken)
+        private static async Task<Results<Ok, BadRequest<ErrorResponse>, NotFound<NotFoundResponse>>> ParametersAndBodyDelegate<TParams, TBody>([AsParameters] TParams parameters, [FromBody] TBody body, IMediator mediator, CancellationToken cancellationToken)
             where TBody : class, TParams, IRequest<OperationResult>
             where TParams : class
         {
@@ -459,7 +461,7 @@ namespace Invee.Api.Endpoints
                 return result.ToResponse();
         }
 
-        private static async Task<Results<Ok<OperationResponse<TResponse>>, BadRequest<OperationResponse<TResponse>>, NotFound<OperationResponse<TResponse>>>> ParametersDelegate<TParams, TResponse>([AsParameters] TParams parameters, IMediator mediator, CancellationToken cancellationToken)
+        private static async Task<Results<Ok<TResponse>, BadRequest<ErrorResponse>, NotFound<NotFoundResponse>>> ParametersDelegate<TParams, TResponse>([AsParameters] TParams parameters, IMediator mediator, CancellationToken cancellationToken)
             where TParams : IRequest<OperationResult<TResponse>>
         {
             var result = await mediator.Send(parameters, cancellationToken);
@@ -467,7 +469,7 @@ namespace Invee.Api.Endpoints
             return result.ToResponse();
         }
 
-        private static async Task<Results<Ok<OperationResponse<TResponse>>, BadRequest<OperationResponse<TResponse>>, NotFound<OperationResponse<TResponse>>>> BodyDelegate<TBody, TResponse>([FromBody] TBody parameters, IMediator mediator, CancellationToken cancellationToken)
+        private static async Task<Results<Ok<TResponse>, BadRequest<ErrorResponse>, NotFound<NotFoundResponse>>> BodyDelegate<TBody, TResponse>([FromBody] TBody parameters, IMediator mediator, CancellationToken cancellationToken)
             where TBody : IRequest<OperationResult<TResponse>>
         {
             var result = await mediator.Send(parameters, cancellationToken);
@@ -475,7 +477,7 @@ namespace Invee.Api.Endpoints
             return result.ToResponse();
         }
 
-        private static async Task<Results<Ok<OperationResponse<TResponse>>, BadRequest<OperationResponse<TResponse>>, NotFound<OperationResponse<TResponse>>>> ParametersAndBodyDelegate<TParams, TBody, TResponse>([AsParameters] TParams parameters, [FromBody] TBody body, IMediator mediator, CancellationToken cancellationToken)
+        private static async Task<Results<Ok<TResponse>, BadRequest<ErrorResponse>, NotFound<NotFoundResponse>>> ParametersAndBodyDelegate<TParams, TBody, TResponse>([AsParameters] TParams parameters, [FromBody] TBody body, IMediator mediator, CancellationToken cancellationToken)
             where TBody : class, TParams, IRequest<OperationResult<TResponse>>
             where TParams : class
         {
@@ -488,6 +490,11 @@ namespace Invee.Api.Endpoints
                 var result = await mediator.Send(body, cancellationToken);
                 
                 return result.ToResponse();
+        }
+
+        private static string GetEndpointName<TRequest>()
+        {
+            return typeof(TRequest).Name;
         }
     }
 }

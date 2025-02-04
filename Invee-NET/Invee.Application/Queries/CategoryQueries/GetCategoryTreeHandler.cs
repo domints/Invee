@@ -11,16 +11,16 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Invee.Application.Queries.CategoryQueries
 {
-    public class GetCategoriesHandler : IRequestHandler<GetCategories, OperationResult<List<CategoryTreeResponse>>>
+    public class GetCategoryTreeHandler : IRequestHandler<GetCategoryTree, OperationResult<List<CategoryTreeResponse>>>
     {
         private readonly InveeContext _db;
 
-        public GetCategoriesHandler(InveeContext db)
+        public GetCategoryTreeHandler(InveeContext db)
         {
             _db = db;
         }
 
-        public async Task<OperationResult<List<CategoryTreeResponse>>> Handle(GetCategories request, CancellationToken cancellationToken)
+        public async Task<OperationResult<List<CategoryTreeResponse>>> Handle(GetCategoryTree request, CancellationToken cancellationToken)
         {
             var result = await _db.Categories.ToListAsync(cancellationToken: cancellationToken);
             var roots = result.Where(c => c.ParentId == null).Select(c => new CategoryTreeResponse 

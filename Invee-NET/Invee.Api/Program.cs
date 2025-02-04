@@ -15,6 +15,15 @@ var builder = WebApplication.CreateBuilder(args);
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();
 
+builder.Services.AddCors(options =>
+{
+    options.AddDefaultPolicy(
+        policy =>
+        {
+            policy.WithOrigins("http://localhost:5173").AllowCredentials();
+        });
+});
+
 builder.Services.AddAuthentication(options =>
 {
     options.DefaultScheme = CookieAuthenticationDefaults.AuthenticationScheme;
@@ -39,6 +48,17 @@ builder.Services.AddAuthentication(options =>
     options.MapInboundClaims = false;
     options.TokenValidationParameters.NameClaimType = JwtRegisteredClaimNames.Name;
     options.TokenValidationParameters.RoleClaimType = "roles";
+    options.Events.OnRedirectToIdentityProvider = context =>
+    {
+        if (context.Request.Path != "/api/auth")
+        {
+            context.Response.StatusCode = 401;
+            context.Response.Headers["OAuth-Redirect"] = context.Request.Scheme + "://" + context.Request.Host + "/api/auth"; //context.ProtocolMessage.CreateAuthenticationRequestUrl();
+            context.Response.Headers["Access-Control-Expose-Headers"] = "OAuth-Redirect";
+            context.HandleResponse();
+        }
+        return Task.CompletedTask;
+    };
 });
 var requireAuthPolicy = new AuthorizationPolicyBuilder()
     .RequireAuthenticatedUser()
@@ -75,6 +95,8 @@ if (app.Environment.IsDevelopment())
     app.MapOpenApi().AllowAnonymous();
     app.MapScalarApiReference().AllowAnonymous();
 }
+
+app.UseCors();
 
 app.UseAuthentication();
 app.UseAuthorization();

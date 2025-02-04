@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using Invee.Application.Models;
 using Invee.Application.Models.DTOs;
 using Invee.Data.Database;
+using Invee.Data.Database.Model;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 
@@ -25,7 +26,7 @@ namespace Invee.Application.Queries.StorageQueries
         {
             var storageIdList = await _db.Storages.Where(s => s.Slug == request.Slug).Select(s => s.Id).ToListAsync(cancellationToken: cancellationToken);
             if (storageIdList.Count == 0)
-                return OperationResult<StorageItemsResponse>.NotFound();
+                return OperationResult<StorageItemsResponse>.NotFound(nameof(Storage));
 
             return await _mediator.Send(new GetStorage(storageIdList[0]));
         }

@@ -9,5 +9,5 @@ using MediatR;
 
 namespace Invee.Application.Queries.CategoryQueries
 {
-    public record GetCategories() : IRequest<OperationResult<List<CategoryTreeResponse>>>;
+    public record GetCategoryTree() : IRequest<OperationResult<List<CategoryTreeResponse>>>;
 }

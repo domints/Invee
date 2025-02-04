@@ -2,7 +2,9 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Invee.Application.Consts;
 using Invee.Application.Models;
+using Invee.Application.Models.DTOs;
 using Invee.Data.Database;
 using Invee.Data.Database.Model;
 using MediatR;
@@ -21,28 +23,28 @@ namespace Invee.Application.Commands.StorageCommands
         public async Task<OperationResult<int>> Handle(CreateStorage request, CancellationToken cancellationToken)
         {
             if (string.IsNullOrWhiteSpace(request.Name))
-                return OperationResult<int>.Fail(["Storage name cannot be empty"]);
+                return OperationResult<int>.Fail(Errors.NameEmpty());
             var isDuplicate = _db.Storages.Any(s => s.Name == request.Name);
             if (isDuplicate)
-                return OperationResult<int>.Fail(["Storage with such name already exists"]);
+                return OperationResult<int>.Fail(Errors.NameDuplicate(nameof(Storage)));
             
             if (request.Slug != null)
             {
                 var slugDuplicate = _db.Storages.Any(s => s.Slug == request.Slug);
                 if (slugDuplicate)
-                    return OperationResult<int>.Fail(["Storage with such slug already exists"]);
+                    return OperationResult<int>.Fail(Errors.NameDuplicate(nameof(Storage)));
             }
 
             if (request.ParentId != null)
             {
                 var parentExists = _db.Storages.Any(s => s.Id == request.ParentId);
                 if (!parentExists)
-                    return OperationResult<int>.NotFound();
+                    return OperationResult<int>.NotFound(nameof(Storage));
             }
 
             var typeExists = _db.StorageTypes.Any(st => st.Id == request.StorageTypeId);
             if (!typeExists)
-                return OperationResult<int>.NotFound();
+                return OperationResult<int>.NotFound(nameof(StorageType));
 
             var entity = new Storage
             {

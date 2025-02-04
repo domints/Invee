@@ -2,49 +2,34 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Invee.Api.Models;
 using Invee.Application.Models;
+using Invee.Application.Models.DTOs;
 using Microsoft.AspNetCore.Http.HttpResults;
 
 namespace Invee.Api
 {
-    public class OperationResponse
-    {
-        public List<string>? Errors { get; set; }
-    }
 
-    public class OperationResponse<T> : OperationResponse
+    public static class OperationResultConverter
     {
-        public T? Data { get; set; }
-    }
-
-    public static class OperationResponseConverter
-    {
-        public static Results<Ok<OperationResponse>, BadRequest<OperationResponse>, NotFound<OperationResponse>> ToResponse(this OperationResult result)
+        public static Results<Ok, BadRequest<ErrorResponse>, NotFound<NotFoundResponse>> ToResponse(this OperationResult result)
         {
-            if (result.IsNotFound)
-            {
-                return TypedResults.NotFound(new OperationResponse { Errors = result.Errors });
-            }
-            if (!result.IsOk)
-            {
-                return TypedResults.BadRequest(new OperationResponse { Errors = result.Errors });
-            }
+            if (result is NotFoundOperationResult notFoundOperationResult)
+                return TypedResults.NotFound(new NotFoundResponse(notFoundOperationResult.NotFoundEntity!));
+            if (result is FailedOperationResult failedOperationResult)
+                return TypedResults.BadRequest(new ErrorResponse(failedOperationResult.Errors));
 
-            return TypedResults.Ok(new OperationResponse { Errors = result.Errors });
-        }
+            return TypedResults.Ok();
+        } 
 
-        public static Results<Ok<OperationResponse<T>>, BadRequest<OperationResponse<T>>, NotFound<OperationResponse<T>>> ToResponse<T>(this OperationResult<T> result)
+        public static Results<Ok<T>, BadRequest<ErrorResponse>, NotFound<NotFoundResponse>> ToResponse<T>(this OperationResult<T> result)
         {
-            if (result.IsNotFound)
-            {
-                return TypedResults.NotFound(new OperationResponse<T> { Data = result.Data, Errors = result.Errors });
-            }
-            if (!result.IsOk)
-            {
-                return TypedResults.BadRequest(new OperationResponse<T> { Data = result.Data, Errors = result.Errors});
-            }
+            if (result is NotFoundOperationResult<T> notFoundOperationResult)
+                return TypedResults.NotFound(new NotFoundResponse(notFoundOperationResult.NotFoundEntity!));
+            if (result is FailedOperationResult<T> failedOperationResult)
+                return TypedResults.BadRequest(new ErrorResponse(failedOperationResult.Errors));
 
-            return TypedResults.Ok(new OperationResponse<T> { Data = result.Data, Errors = result.Errors});
-        }
+            return TypedResults.Ok(result.Data);
+        } 
     }
 }
