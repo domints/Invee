@@ -11,6 +11,8 @@ namespace Invee.Application.Models.DTOs
         public int Id { get; set; }
         public required string Name { get; set; }
         public required StorageType Type { get; set; }
+        public int? ParentId { get; set; }
+        public string? ParentSlug { get; set; }
         public List<StorageListEntry> ChildStorages { get; set; } = new List<StorageListEntry>();
         public List<ItemListEntry> Items { get; set; } = new List<ItemListEntry>();
     }

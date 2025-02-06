@@ -22,7 +22,7 @@ namespace Invee.Application.Queries.StorageQueries
 
         public async Task<OperationResult<StorageItemsResponse>> Handle(GetStorage request, CancellationToken cancellationToken)
         {
-            var storage = await _db.Storages.Include(s => s.Type).FirstOrDefaultAsync(s => s.Id == request.Id, cancellationToken: cancellationToken);
+            var storage = await _db.Storages.Include(s => s.Type).Include(s => s.Parent).FirstOrDefaultAsync(s => s.Id == request.Id, cancellationToken: cancellationToken);
             if (storage == null)
                 return OperationResult<StorageItemsResponse>.NotFound(nameof(Storage));
 
@@ -34,6 +34,8 @@ namespace Invee.Application.Queries.StorageQueries
                 Id = storage.Id,
                 Name = storage.Name,
                 Type = storage.Type!,
+                ParentId = storage?.Parent?.Id,
+                ParentSlug = storage?.Parent?.Slug,
                 ChildStorages = childStorages.ToListEntries(),
                 Items = items.Select(i => new ItemListEntry
                 {

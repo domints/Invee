@@ -10,6 +10,28 @@
     }
   ],
   "paths": {
+    "/api/auth": {
+      "get": {
+        "tags": [
+          "Invee.Api"
+        ],
+        "parameters": [
+          {
+            "name": "redirect",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
     "/api/categories": {
       "get": {
         "tags": [
@@ -924,6 +946,15 @@
           "type": {
             "$ref": "#/components/schemas/StorageType"
           },
+          "parentId": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "parentSlug": {
+            "type": "string",
+            "nullable": true
+          },
           "childStorages": {
             "type": "array",
             "items": {
@@ -1005,6 +1036,9 @@
     }
   },
   "tags": [
+    {
+      "name": "Invee.Api"
+    },
     {
       "name": "Categories"
     },

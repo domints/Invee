@@ -73,6 +73,8 @@ export type StorageItemsResponse = {
     id?: number;
     name: string;
     type: StorageType;
+    parentId?: number | null;
+    parentSlug?: string | null;
     childStorages?: Array<StorageListEntry>;
     items?: Array<ItemListEntry>;
 };
@@ -94,6 +96,22 @@ export type StorageTreeResponse = {
 export type StorageType = {
     id?: number;
     name: string;
+};
+
+export type GetApiAuthData = {
+    body?: never;
+    path?: never;
+    query: {
+        redirect: string;
+    };
+    url: '/api/auth';
+};
+
+export type GetApiAuthResponses = {
+    /**
+     * OK
+     */
+    200: unknown;
 };
 
 export type GetCategoryTreeData = {

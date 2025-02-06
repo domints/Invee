@@ -5,82 +5,83 @@ import HelloWorld from './components/HelloWorld.vue'
 
 <template>
   <header>
-    <img alt="Vue logo" class="logo" src="@/assets/logo.svg" width="125" height="125" />
-
-    <div class="wrapper">
-      <HelloWorld msg="You did it!" />
-
-      <nav>
-        <RouterLink to="/">Home</RouterLink>
-        <RouterLink to="/about">About</RouterLink>
-      </nav>
+    <div class="logo">
+      <RouterLink to="/">
+        <img alt="Vue logo" class="logo__img" src="@/assets/logo.svg" height="100%" />
+        <span class="title">Invee</span>
+      </RouterLink>
     </div>
+    <div class="spacer">
+    </div>
+    <nav>
+      <RouterLink to="/">Home</RouterLink>
+      <RouterLink to="/about">About</RouterLink>
+    </nav>
   </header>
 
-  <RouterView />
+  <main>
+    <RouterView v-slot="{ Component }">
+      <template v-if="Component">
+        <Suspense>
+          <!-- main content -->
+          <component :is="Component"></component>
+
+          <!-- loading state -->
+          <template #fallback>
+            Loading...
+          </template>
+        </Suspense>
+      </template>
+    </RouterView>
+  </main>
 </template>
 
-<style scoped>
-
+<style lang="scss" scoped>
 header {
-  line-height: 1.5;
-  max-height: 100vh;
-}
-
-.logo {
-  display: block;
-  margin: 0 auto 2rem;
-}
-
-nav {
-  width: 100%;
-  font-size: 12px;
-  text-align: center;
-  margin-top: 2rem;
-}
-
-nav a.router-link-exact-active {
-  color: var(--color-text);
-}
-
-nav a.router-link-exact-active:hover {
-  background-color: transparent;
-}
-
-nav a {
-  display: inline-block;
-  padding: 0 1rem;
-  border-left: 1px solid var(--color-border);
-}
-
-nav a:first-of-type {
-  border: 0;
-}
-
-@media (min-width: 1024px) {
-  header {
-    display: flex;
-    place-items: center;
-    padding-right: calc(var(--section-gap) / 2);
-  }
+  display: flex;
+  padding-top: 0.5rem;
+  padding-bottom: 0.5rem;
+  height: 3rem;
 
   .logo {
-    margin: 0 2rem 0 0;
+    height: 100%;
+    margin-left: 2rem;
+
+    a {
+      display: flex;
+      height: 100%;
+      align-items: center;
+      padding-right: 0.5rem;
+
+      .title {
+        display: inline-block;
+        margin-left: 0.8rem;
+        font-size: 1.2rem;
+        line-height: 1.2rem;
+        font-weight: 600;
+      }
+    }
   }
 
-  header .wrapper {
-    display: flex;
-    place-items: flex-start;
-    flex-wrap: wrap;
+  .spacer {
+    flex-grow: 1;
   }
 
   nav {
-    text-align: left;
-    margin-left: -1rem;
-    font-size: 1rem;
+    height: 100%;
+    display: flex;
+    align-items: center;
 
-    padding: 1rem 0;
-    margin-top: 1rem;
+    a {
+      height: 100%;
+      padding-left: 2rem;
+      padding-right: 2rem;
+    }
   }
+}
+
+main {
+  max-width: 1200px;
+  margin: 0 auto;
 }
 </style>

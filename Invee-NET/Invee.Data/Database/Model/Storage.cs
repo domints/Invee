@@ -15,5 +15,6 @@ namespace Invee.Data.Database.Model
         public string? Slug { get; set; }
         
         public virtual StorageType? Type { get; set; }
+        public virtual Storage? Parent { get; set; }
     }
 }
