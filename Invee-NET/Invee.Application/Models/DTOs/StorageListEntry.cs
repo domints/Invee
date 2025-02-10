@@ -13,18 +13,4 @@ namespace Invee.Application.Models.DTOs
         public string? Slug { get; set; }
         public required StorageType Type { get; set; }
     }
-
-    public static class StorageListEntryConverter
-    {
-        public static List<StorageListEntry> ToListEntries(this List<Storage> storages)
-        {
-            return storages.Select(c => new StorageListEntry
-            {
-                Id = c.Id,
-                Name = c.Name,
-                Slug = c.Slug,
-                Type = c.Type!
-            }).ToList();
-        }
-    }
 }

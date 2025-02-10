@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Invee.Application.Models;
+using Invee.Application.Models.Converters;
 using Invee.Application.Models.DTOs;
 using Invee.Data.Database;
 using Invee.Data.Database.Model;
@@ -28,6 +29,8 @@ namespace Invee.Application.Queries.StorageQueries
 
             var childStorages = await _db.Storages.Include(s => s.Type).Where(s => s.ParentId == request.Id).ToListAsync(cancellationToken: cancellationToken);
             var items = await _db.Items.Where(i => i.StorageId == request.Id).ToListAsync(cancellationToken: cancellationToken);
+            var itemIds = items.Select(i => i.Id).ToArray();
+            var borrowedIds = await _db.Borrowings.Where(b => b.Status != Data.Enums.BorrowingStatus.Returned && itemIds.Contains(b.ItemId)).Select(b => b.ItemId).ToHashSetAsync();
 
             var result = new StorageItemsResponse
             {
@@ -37,15 +40,7 @@ namespace Invee.Application.Queries.StorageQueries
                 ParentId = storage?.Parent?.Id,
                 ParentSlug = storage?.Parent?.Slug,
                 ChildStorages = childStorages.ToListEntries(),
-                Items = items.Select(i => new ItemListEntry
-                {
-                    Id = i.Id,
-                    Name = i.Name,
-                    Slug = i.Slug,
-                    QuantityType = i.QuantityType,
-                    Quantity = i.QuantityType == Data.Enums.QuantityType.Precise ? i.Quantity : null,
-                    Level = i.QuantityType == Data.Enums.QuantityType.Levels ? (Data.Enums.QuantityLevel)i.Quantity! : null
-                }).ToList()
+                Items = items.Select(ItemConverter.ToListEntry).MarkBorrowed(borrowedIds).ToList()
             };
 
             return OperationResult.Success(result);

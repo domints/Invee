@@ -15,11 +15,11 @@ namespace Invee.Api.Endpoints
         public static RouteGroupBuilder MapCategories(this RouteGroupBuilder group)
         {
             group.WithTags("Categories");
-            group.MapQuery<GetCategoryTree, List<CategoryTreeResponse>>("/");//.WithName("GetCategoryTree");
-            group.MapQuery<GetCategory, CategoryDTO>("/{id:int}");//.WithName("GetCategory");
-            group.MapBodyPostCommand<CreateCategory, int>("/");//.WithName("CreateCategory");
-            group.MapParamDeleteCommand<DeleteCategory>("/{id:int}");//.WithName("DeleteCategory");
-            group.MapBodyAndParamPutCommand<IdParameter, RenameCategory>("/{id:int}");//.WithName("RenameCategory");
+            group.MapQuery<GetCategoryTree, List<CategoryTreeResponse>>("/");
+            group.MapQuery<GetCategory, CategoryDTO>("/{id:int}");
+            group.MapBodyPostCommand<CreateCategory, int>("/");
+            group.MapParamDeleteCommand<DeleteCategory>("/{id:int}");
+            group.MapBodyAndParamPutCommand<IdParameter, RenameCategory>("/{id:int}");
             group.MapParamPostCommand<SetCategoryParent>("/{id:int}/setParent/{parentId:int?}");
             return group;
         }

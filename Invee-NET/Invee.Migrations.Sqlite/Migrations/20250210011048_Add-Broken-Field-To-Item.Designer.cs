@@ -3,6 +3,7 @@ using System;
 using Invee.Data.Database;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -10,9 +11,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Invee.Migrations.Sqlite.Migrations
 {
     [DbContext(typeof(InveeContext))]
-    partial class InveeContextModelSnapshot : ModelSnapshot
+    [Migration("20250210011048_Add-Broken-Field-To-Item")]
+    partial class AddBrokenFieldToItem
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "9.0.1");
@@ -58,9 +61,7 @@ namespace Invee.Migrations.Sqlite.Migrations
 
                     b.HasIndex("ItemId");
 
-                    b.HasIndex("Status");
-
-                    b.ToTable("Borrowings");
+                    b.ToTable("Borrowing");
                 });
 
             modelBuilder.Entity("Invee.Data.Database.Model.Category", b =>

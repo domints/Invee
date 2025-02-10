@@ -16,8 +16,11 @@ namespace Invee.Data.Database.Model
         public QuantityType QuantityType { get; set; }
         public string? Note { get; set; }
         public string? Slug { get; set; }
+        public bool Broken { get; set; }
 
         public virtual Category? Category { get; set; }
         public virtual Storage? Storage { get; set; }
+
+        public virtual ICollection<Borrowing>? Borrowings { get; set; }
     }
 }

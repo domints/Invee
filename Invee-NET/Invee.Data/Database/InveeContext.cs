@@ -14,6 +14,7 @@ namespace Invee.Data.Database
         {
         }
         
+        public required DbSet<Borrowing> Borrowings { get; set; }
         public required DbSet<Category> Categories { get; set; }
         public required DbSet<Item> Items { get; set; }
         public required DbSet<Storage> Storages { get; set; }
