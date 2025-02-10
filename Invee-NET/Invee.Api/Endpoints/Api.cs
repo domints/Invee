@@ -4,6 +4,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using Invee.Api.Models;
 using Invee.Application.Models;
+using Invee.Application.Queries;
 using MediatR;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
@@ -15,6 +16,7 @@ namespace Invee.Api.Endpoints
         public static RouteGroupBuilder MapApis(this RouteGroupBuilder group)
         {
             group.MapGet("/auth", (string redirect) => Results.Redirect(redirect));
+            group.MapGet("/user", (HttpContext context, IMediator mediator, CancellationToken cancellationToken) => mediator.Send(new UserInfo(context.User), cancellationToken));
             group.MapGroup("/categories").MapCategories();
             group.MapGroup("/storageTypes").MapStorageTypes();
             group.MapGroup("/storages").MapStorages();
