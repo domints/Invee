@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import type { StorageListEntry } from '@/client';
+import { slugId } from '@/utils';
 import SvgIcon from '@jamescoyle/vue-icon'
 import { mdiPackageVariant } from '@mdi/js'
 
@@ -10,7 +11,7 @@ defineProps<{
 
 <template>
     <li>
-        <router-link :to="{ name: 'storage', params: { id: storage.slug ?? storage.id } }">
+        <router-link :to="{ name: 'storage', params: slugId(storage) }">
             <div class="icon">
                 <SvgIcon type="mdi" size="2rem" :path="mdiPackageVariant"></SvgIcon>
             </div>

@@ -15,8 +15,8 @@ namespace Invee.Api.Endpoints
     {
         public static RouteGroupBuilder MapApis(this RouteGroupBuilder group)
         {
-            group.MapGet("/auth", (string redirect) => Results.Redirect(redirect));
-            group.MapGet("/user", (HttpContext context, IMediator mediator, CancellationToken cancellationToken) => mediator.Send(new UserInfo(context.User), cancellationToken));
+            group.MapGet("/auth", (string redirect) => Results.Redirect(redirect)).ExcludeFromDescription();
+            group.MapGet("/user", (HttpContext context, IMediator mediator, CancellationToken cancellationToken) => mediator.Send(new UserInfo(context.User), cancellationToken)).WithName("GetUserInfo");
             group.MapGroup("/categories").MapCategories();
             group.MapGroup("/storageTypes").MapStorageTypes();
             group.MapGroup("/storages").MapStorages();

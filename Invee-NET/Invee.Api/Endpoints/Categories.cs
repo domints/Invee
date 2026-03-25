@@ -15,8 +15,9 @@ namespace Invee.Api.Endpoints
         public static RouteGroupBuilder MapCategories(this RouteGroupBuilder group)
         {
             group.WithTags("Categories");
-            group.MapQuery<GetCategoryTree, List<CategoryTreeResponse>>("/");
+            group.MapQuery<GetCategoryTree, List<CategoryTreeResponse>>("/").AllowAnonymous();
             group.MapQuery<GetCategory, CategoryDTO>("/{id:int}");
+            group.MapQuery<GetCategoryItems, List<ItemListEntry>>("/{id:int}/items").AllowAnonymous();
             group.MapBodyPostCommand<CreateCategory, int>("/");
             group.MapParamDeleteCommand<DeleteCategory>("/{id:int}");
             group.MapBodyAndParamPutCommand<IdParameter, RenameCategory>("/{id:int}");

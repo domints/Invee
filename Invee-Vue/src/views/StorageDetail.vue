@@ -5,6 +5,7 @@ import { ref } from 'vue'
 import { onBeforeRouteUpdate, useRoute } from 'vue-router'
 import SvgIcon from '@jamescoyle/vue-icon';
 import { mdiArrowUpLeftBold } from '@mdi/js';
+import { slugParentId } from '@/utils';
 
 const storageId = ref(0);
 const storage = ref<GetStorageResponse>();
@@ -37,7 +38,7 @@ onBeforeRouteUpdate(async (to, from) => {
     <div class="storage-header">
         <div class="storage-header__back">
             <router-link v-if="storage?.parentId"
-                :to="{ name: 'storage', params: { id: storage?.parentSlug ?? storage?.parentId } }">
+                :to="{ name: 'storage', params: slugParentId(storage) }">
                 <svg-icon type="mdi" size="1rem" :path="mdiArrowUpLeftBold"></svg-icon> Up!
             </router-link>
             <router-link v-if="!storage?.parentId" :to="{ name: 'home' }">

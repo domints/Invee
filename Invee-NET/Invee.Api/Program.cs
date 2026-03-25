@@ -7,13 +7,20 @@ using Microsoft.AspNetCore.Authentication.OpenIdConnect;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Protocols.OpenIdConnect;
+using Microsoft.OpenApi.Models;
 using Scalar.AspNetCore;
+using Unchase.Swashbuckle.AspNetCore.Extensions.Extensions;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();
+builder.Services.AddSwaggerGen(c =>
+{
+    c.SwaggerDoc("v1", new OpenApiInfo { Title = "My API", Version = "v1" });
+    c.AddEnumsWithValuesFixFilters();
+});
 
 builder.Services.AddCors(options =>
 {
@@ -21,6 +28,8 @@ builder.Services.AddCors(options =>
         policy =>
         {
             policy.WithOrigins("http://localhost:5173").AllowCredentials();
+            policy.AllowAnyMethod();
+            policy.AllowAnyHeader();
         });
 });
 
@@ -74,7 +83,7 @@ var dbType = builder.Configuration.GetValue<string>("Database:Type");
 switch (dbType)
 {
     case "sqlite":
-        builder.Services.AddDbContext<InveeContext>(options => 
+        builder.Services.AddDbContext<InveeContext>(options =>
             options.UseSqlite(builder.Configuration.GetValue<string>("Database:ConnectionString"),
              x => x.MigrationsAssembly(typeof(Invee.Migrations.Sqlite.Marker).Assembly)));
         break;
@@ -84,7 +93,8 @@ switch (dbType)
 
 var app = builder.Build();
 
-using (var scope = app.Services.CreateScope()) {
+using (var scope = app.Services.CreateScope())
+{
     var db = scope.ServiceProvider.GetRequiredService<InveeContext>();
     db.Database.Migrate();
 }
@@ -92,8 +102,13 @@ using (var scope = app.Services.CreateScope()) {
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
+    app.UseSwagger();
     app.MapOpenApi().AllowAnonymous();
     app.MapScalarApiReference().AllowAnonymous();
+    app.UseSwaggerUI(c =>
+    {
+        c.SwaggerEndpoint("v1/swagger.json", "My API V1");
+    });
 }
 
 app.UseCors();

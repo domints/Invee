@@ -10,6 +10,7 @@ namespace Invee.Application.Models.DTOs
         public int Id { get; set; }
         public int? ParentId { get; set; }
         public required string Name { get; set; }
+        public string? Slug { get; set; }
         public List<CategoryTreeResponse> Children { get; set; } = new List<CategoryTreeResponse>();
     }
 }

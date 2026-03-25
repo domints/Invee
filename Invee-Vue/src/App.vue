@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import { RouterLink, RouterView } from 'vue-router'
-import HelloWorld from './components/HelloWorld.vue'
 </script>
 
 <template>
@@ -16,6 +15,7 @@ import HelloWorld from './components/HelloWorld.vue'
     <nav>
       <RouterLink to="/">Home</RouterLink>
       <RouterLink to="/about">About</RouterLink>
+      <RouterLink to="/admin">Administration</RouterLink>
     </nav>
   </header>
 
@@ -81,7 +81,8 @@ header {
 }
 
 main {
-  max-width: 1200px;
+  max-width: 75rem;
   margin: 0 auto;
+  padding: 1rem;
 }
 </style>

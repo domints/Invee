@@ -23,10 +23,11 @@ namespace Invee.Application.Queries.CategoryQueries
         public async Task<OperationResult<List<CategoryTreeResponse>>> Handle(GetCategoryTree request, CancellationToken cancellationToken)
         {
             var result = await _db.Categories.ToListAsync(cancellationToken: cancellationToken);
-            var roots = result.Where(c => c.ParentId == null).Select(c => new CategoryTreeResponse 
+            var roots = result.Where(c => c.ParentId == null).Select(c => new CategoryTreeResponse
             {
                 Id = c.Id,
-                Name = c.Name
+                Name = c.Name,
+                Slug = c.Slug
             }).ToList();
             var children = result.Where(c => c.ParentId != null).GroupBy(c => c.ParentId ?? -1).ToDictionary(g => g.Key, v => v.ToList());
             foreach (var root in roots)
@@ -42,7 +43,8 @@ namespace Invee.Application.Queries.CategoryQueries
                 {
                     Id = c.Id,
                     Name = c.Name,
-                    ParentId = category.Id
+                    ParentId = category.Id,
+                    Slug = c.Slug
                 }).ToList();
 
                 foreach (var c in category.Children)

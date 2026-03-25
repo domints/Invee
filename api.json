@@ -10,24 +10,22 @@
     }
   ],
   "paths": {
-    "/api/auth": {
+    "/api/user": {
       "get": {
         "tags": [
           "Invee.Api"
         ],
-        "parameters": [
-          {
-            "name": "redirect",
-            "in": "query",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
+        "operationId": "GetUserInfo",
         "responses": {
           "200": {
-            "description": "OK"
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserInfoDTO"
+                }
+              }
+            }
           }
         }
       }
@@ -244,6 +242,60 @@
         "responses": {
           "200": {
             "description": "OK"
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NotFoundResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/categories/{id}/items": {
+      "get": {
+        "tags": [
+          "Categories"
+        ],
+        "operationId": "GetCategoryItems",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ItemListEntry"
+                  }
+                }
+              }
+            }
           },
           "400": {
             "description": "Bad Request",
@@ -695,11 +747,412 @@
             }
           }
         }
+      },
+      "get": {
+        "tags": [
+          "Items"
+        ],
+        "operationId": "GetAllItems",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ItemListEntry"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NotFoundResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/items/{id}": {
+      "get": {
+        "tags": [
+          "Items"
+        ],
+        "operationId": "GetItem",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ItemResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NotFoundResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/items/{id}/reserve": {
+      "post": {
+        "tags": [
+          "Items"
+        ],
+        "operationId": "ReserveItem",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReserveItem"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NotFoundResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/items/{id}/borrow": {
+      "post": {
+        "tags": [
+          "Items"
+        ],
+        "operationId": "BorrowItem",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BorrowItem"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NotFoundResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/items/{id}/borrowReservation": {
+      "post": {
+        "tags": [
+          "Items"
+        ],
+        "operationId": "BorrowReservation",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NotFoundResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/items/{id}/return": {
+      "post": {
+        "tags": [
+          "Items"
+        ],
+        "operationId": "ReturnItem",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NotFoundResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/items/{id}/cancelReservation": {
+      "post": {
+        "tags": [
+          "Items"
+        ],
+        "operationId": "CancelReservation",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NotFoundResponse"
+                }
+              }
+            }
+          }
+        }
       }
     }
   },
   "components": {
     "schemas": {
+      "BorrowingDTO": {
+        "required": [
+          "borrower"
+        ],
+        "type": "object",
+        "properties": {
+          "status": {
+            "$ref": "#/components/schemas/BorrowingStatus"
+          },
+          "start": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "end": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "update": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "borrower": {
+            "type": "string"
+          },
+          "comment": {
+            "type": "string",
+            "nullable": true
+          },
+          "incomplete": {
+            "type": "boolean"
+          }
+        }
+      },
+      "BorrowingStatus": {
+        "type": "integer"
+      },
+      "BorrowItem": {
+        "required": [
+          "borrowerName",
+          "expectedReturn",
+          "incomplete",
+          "comment",
+          "id"
+        ],
+        "type": "object",
+        "properties": {
+          "borrowerName": {
+            "type": "string"
+          },
+          "expectedReturn": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "incomplete": {
+            "type": "boolean"
+          },
+          "comment": {
+            "type": "string",
+            "nullable": true
+          },
+          "id": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
       "CategoryDTO": {
         "required": [
           "name"
@@ -741,6 +1194,10 @@
           },
           "name": {
             "type": "string"
+          },
+          "slug": {
+            "type": "string",
+            "nullable": true
           },
           "children": {
             "type": "array",
@@ -892,6 +1349,60 @@
           },
           "level": {
             "$ref": "#/components/schemas/NullableOfQuantityLevel"
+          },
+          "broken": {
+            "type": "boolean"
+          },
+          "borrowed": {
+            "type": "boolean"
+          }
+        }
+      },
+      "ItemResponse": {
+        "required": [
+          "name",
+          "storage",
+          "category"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "slug": {
+            "type": "string",
+            "nullable": true
+          },
+          "name": {
+            "type": "string"
+          },
+          "quantityType": {
+            "$ref": "#/components/schemas/QuantityType"
+          },
+          "quantity": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          },
+          "level": {
+            "$ref": "#/components/schemas/NullableOfQuantityLevel"
+          },
+          "storage": {
+            "$ref": "#/components/schemas/StorageListEntry"
+          },
+          "category": {
+            "$ref": "#/components/schemas/CategoryDTO"
+          },
+          "note": {
+            "type": "string",
+            "nullable": true
+          },
+          "borrowings": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/BorrowingDTO"
+            }
           }
         }
       },
@@ -922,6 +1433,41 @@
         "properties": {
           "name": {
             "type": "string"
+          },
+          "id": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
+      "ReserveItem": {
+        "required": [
+          "borrowerName",
+          "expectedStart",
+          "expectedReturn",
+          "incomplete",
+          "comment",
+          "id"
+        ],
+        "type": "object",
+        "properties": {
+          "borrowerName": {
+            "type": "string"
+          },
+          "expectedStart": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "expectedReturn": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "incomplete": {
+            "type": "boolean"
+          },
+          "comment": {
+            "type": "string",
+            "nullable": true
           },
           "id": {
             "type": "integer",
@@ -1029,6 +1575,21 @@
             "format": "int32"
           },
           "name": {
+            "type": "string"
+          }
+        }
+      },
+      "UserInfoDTO": {
+        "required": [
+          "name",
+          "username"
+        ],
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "username": {
             "type": "string"
           }
         }
