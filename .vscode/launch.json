@@ -6,7 +6,7 @@
             "type": "coreclr",
             "request": "launch",
             "preLaunchTask": "build",
-            "program": "${workspaceFolder}/Invee-NET/Invee.Api/bin/Debug/net9.0/Invee.Api.dll",
+            "program": "${workspaceFolder}/Invee-NET/Invee.Api/bin/Debug/net10.0/Invee.Api.dll",
             "args": [],
             "cwd": "${workspaceFolder}/Invee-NET/Invee.Api",
             "stopAtEntry": false,

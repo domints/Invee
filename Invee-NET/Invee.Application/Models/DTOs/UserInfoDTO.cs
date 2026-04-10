@@ -7,7 +7,8 @@ namespace Invee.Application.Models.DTOs
 {
     public class UserInfoDTO
     {
-        public required string Name { get; set; }
-        public required string Username { get; set; }
+        public bool Authorized { get; set; }
+        public string? Name { get; set; }
+        public string? Username { get; set; }
     }
 }

@@ -1,5 +1,9 @@
 <script setup lang="ts">
 import { RouterLink, RouterView } from 'vue-router'
+import { useUserStore } from './stores/user';
+
+const userStore = useUserStore();
+
 </script>
 
 <template>
@@ -14,8 +18,13 @@ import { RouterLink, RouterView } from 'vue-router'
     </div>
     <nav>
       <RouterLink to="/">Home</RouterLink>
-      <RouterLink to="/about">About</RouterLink>
-      <RouterLink to="/admin">Administration</RouterLink>
+      <template v-if="userStore.loggedIn">
+        <RouterLink to="/admin">Administration</RouterLink>
+        Hi {{ userStore.user?.username }}! 
+      </template>
+      <template v-else>
+        <RouterLink to="/login">Login</RouterLink>
+      </template>
     </nav>
   </header>
 

@@ -20,7 +20,7 @@ const categoryTree = ref<CategoryTreeResponse[]>();
 const refreshCategories = async () => {
   categoryTree.value = (await getCategoryTree()).data;
 }
-await refreshCategories();
+//await refreshCategories();
 </script>
 
 <template>

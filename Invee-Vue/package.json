@@ -19,6 +19,7 @@
     "@vueuse/core": "^13.0.0",
     "element-plus": "^2.9.6",
     "oidc-client-ts": "^3.1.0",
+    "pinia": "^3.0.4",
     "vue": "^3.5.13",
     "vue-router": "^4.5.0"
   },

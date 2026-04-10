@@ -15,6 +15,7 @@ namespace Invee.Application.Queries
             var identity = request.User.Identity as ClaimsIdentity;
             return Task.FromResult(new UserInfoDTO
             {
+                Authorized = identity != null && identity.IsAuthenticated,
                 Name = identity?.Name ?? "NO NAME?",
                 Username = identity?.FindFirst("preferred_username")?.Value ?? identity?.FindFirst("nickname")?.Value ?? "NO USERNAME?"
             });
