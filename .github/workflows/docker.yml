@@ -40,3 +40,6 @@ jobs:
           push: ${{ github.event_name != 'pull_request' }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
+      - name: Notify webhook
+        if: ${{ github.event_name != 'pull_request' }}
+        run: curl -fsS -X POST ${{ secrets.WEBHOOK_URL }} -H "Authorization: Bearer ${{ secrets.WEBHOOK_SECRET }}"
