@@ -402,3 +402,4 @@ FodyWeavers.xsd
 # SQLite db file
 
 database.db*
+uploads
