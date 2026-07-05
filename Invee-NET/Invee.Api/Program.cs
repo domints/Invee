@@ -60,12 +60,16 @@ builder.Services.AddAuthentication(options =>
     options.MapInboundClaims = false;
     options.TokenValidationParameters.NameClaimType = JwtRegisteredClaimNames.Name;
     options.TokenValidationParameters.RoleClaimType = "roles";
+    var redirectBaseUrl = oidcConfig["RedirectBaseUrl"];
     options.Events.OnRedirectToIdentityProvider = context =>
     {
         if (context.Request.Path != "/api/auth")
         {
+            var baseUrl = string.IsNullOrEmpty(redirectBaseUrl)
+                ? context.Request.Scheme + "://" + context.Request.Host
+                : redirectBaseUrl.TrimEnd('/');
             context.Response.StatusCode = 401;
-            context.Response.Headers["OAuth-Redirect"] = context.Request.Scheme + "://" + context.Request.Host + "/api/auth"; //context.ProtocolMessage.CreateAuthenticationRequestUrl();
+            context.Response.Headers["OAuth-Redirect"] = baseUrl + "/api/auth";
             context.Response.Headers["Access-Control-Expose-Headers"] = "OAuth-Redirect";
             context.HandleResponse();
         }

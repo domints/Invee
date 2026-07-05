@@ -44,4 +44,4 @@ jobs:
         if: ${{ github.event_name != 'pull_request' }}
         run: |
           curl -fsS -X POST ${{ secrets.WEBHOOK_URL }} \
-          -H "Authorization: Bearer ${{ secrets.WEBHOOK_SECRET }}" \
+          -H "Authorization: Bearer ${{ secrets.WEBHOOK_SECRET }}" 
