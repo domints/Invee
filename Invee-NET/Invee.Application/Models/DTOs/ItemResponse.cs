@@ -23,5 +23,6 @@ namespace Invee.Application.Models.DTOs
         public List<BorrowingDTO> Borrowings { get; set; } = new List<BorrowingDTO>();
         public List<string> Tags { get; set; } = new List<string>();
         public List<ItemCodeDto> Codes { get; set; } = new List<ItemCodeDto>();
+        public List<ImageDto> Images { get; set; } = new List<ImageDto>();
     }
 }

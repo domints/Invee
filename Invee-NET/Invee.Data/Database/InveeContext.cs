@@ -20,5 +20,8 @@ namespace Invee.Data.Database
         public required DbSet<Tag> Tags { get; set; }
         public required DbSet<ItemTag> ItemTags { get; set; }
         public required DbSet<ItemCode> ItemCodes { get; set; }
+        public required DbSet<Image> Images { get; set; }
+        public required DbSet<ItemImage> ItemImages { get; set; }
+        public required DbSet<StorageImage> StorageImages { get; set; }
     }
 }

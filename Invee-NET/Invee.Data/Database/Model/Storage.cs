@@ -16,5 +16,6 @@ namespace Invee.Data.Database.Model
         
         public virtual StorageType? Type { get; set; }
         public virtual Storage? Parent { get; set; }
+        public virtual ICollection<StorageImage>? Images { get; set; }
     }
 }

@@ -8,6 +8,7 @@ import {
     returnItem,
     updateItem,
     type BorrowingDto,
+    type ImageDto,
     type ItemResponse,
 } from '@/client';
 import {
@@ -21,6 +22,7 @@ import { computed, ref } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useUserStore } from '@/stores/user';
 import { slugId } from '@/utils';
+import ImageGallery from '@/components/ImageGallery.vue';
 
 const route = useRoute();
 const router = useRouter();
@@ -29,6 +31,7 @@ const itemId = Number(route.params.id);
 
 const itemResp = await getItem({ path: { id: itemId } });
 const item = ref<ItemResponse>(itemResp.data as ItemResponse);
+const images = ref<ImageDto[]>(item.value.images ?? []);
 
 // Borrowing status constants
 const STATUS_CANCELLED = 0;
@@ -78,6 +81,7 @@ const saveQuantity = async (newQuantity: number | null) => {
                 quantityType: item.value.quantityType ?? 0,
                 quantity: newQuantity,
                 broken: item.value.broken ?? false,
+                expiresAt: item.value.expiresAt ?? null,
             },
         });
         if (resp.error) {
@@ -295,6 +299,16 @@ const levelLabels: Record<number, string> = { 0: 'None', 1: 'Low', 2: 'Good' };
         </div>
 
         <!-- Info section -->
+        <div v-if="images.length" class="item-detail__card">
+            <ImageGallery
+                :images="images"
+                entity-type="item"
+                :entity-id="itemId"
+                :readonly="true"
+            />
+        </div>
+
+        <!-- Info section -->
         <div class="item-detail__card">
             <div class="info-grid">
                 <div class="info-row">
@@ -312,6 +326,16 @@ const levelLabels: Record<number, string> = { 0: 'None', 1: 'Low', 2: 'Good' };
                 <div v-if="item.note" class="info-row info-row--note">
                     <span class="info-label">Note</span>
                     <span class="info-value note-text">{{ item.note }}</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Added</span>
+                    <span class="info-value">{{ item.addedAt ? formatDate(item.addedAt) : '—' }}</span>
+                </div>
+                <div v-if="item.expiresAt" class="info-row">
+                    <span class="info-label">Expires</span>
+                    <span :class="['info-value', new Date(item.expiresAt) < new Date() ? 'expiry--expired' : 'expiry--ok']">
+                        {{ formatDate(item.expiresAt) }}
+                    </span>
                 </div>
             </div>
         </div>
@@ -645,6 +669,15 @@ const levelLabels: Record<number, string> = { 0: 'None', 1: 'Low', 2: 'Good' };
 .note-text {
     white-space: pre-wrap;
     line-height: 1.5;
+}
+
+.expiry--expired {
+    color: var(--el-color-danger);
+    font-weight: 500;
+}
+
+.expiry--ok {
+    color: var(--el-color-success-dark-2);
 }
 
 // Quantity

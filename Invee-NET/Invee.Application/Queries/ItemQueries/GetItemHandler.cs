@@ -25,11 +25,14 @@ namespace Invee.Application.Queries.ItemQueries
         {
             var item = await _db.Items
                 .Include(i => i.Category)
-                .Include(i => i.Storage)
+                .Include(i => i.Storage!)
+                    .ThenInclude(ii => ii.Type)
                 .Include(i => i.Borrowings)
-                .Include(i => i.ItemTags)
+                .Include(i => i.ItemTags!)
                     .ThenInclude(it => it.Tag)
                 .Include(i => i.ItemCodes)
+                .Include(i => i.Images!)
+                    .ThenInclude(ii => ii.Image)
                 .FirstOrDefaultAsync(i => i.Id == request.Id);
             if (item == null)
                 return OperationResult<ItemResponse>.NotFound(nameof(Item));
@@ -71,7 +74,11 @@ namespace Invee.Application.Queries.ItemQueries
                     }
                 }).ToList(),
                 Tags = item.ItemTags!.Select(it => it.Tag!.Name).OrderBy(n => n).ToList(),
-                Codes = item.ItemCodes!.Select(c => new ItemCodeDto(c.Id, c.CodeType, c.Contents)).ToList()
+                Codes = item.ItemCodes!.Select(c => new ItemCodeDto(c.Id, c.CodeType, c.Contents)).ToList(),
+                Images = item.Images!
+                    .OrderBy(ii => ii.Order)
+                    .Select(ii => new ImageDto { Id = ii.ImageId, Url = $"/api/images/{ii.ImageId}", Order = ii.Order })
+                    .ToList()
             };
 
             return OperationResult.Success(result);

@@ -1,11 +1,11 @@
 <script setup lang="ts">
-import { deleteStorageType, renameStorageType, type StorageType } from '@/client';
+import { deleteStorageType, renameStorageType, type StorageTypeDto } from '@/client';
 import { ElButton, ElDialog, ElForm, ElFormItem, ElInput } from 'element-plus';
 import { Delete, Edit } from '@element-plus/icons-vue';
 import { reactive, ref } from 'vue';
 
 defineProps<{
-    types: StorageType[]
+    types: StorageTypeDto[]
 }>()
 const emit = defineEmits<{
     changed: []
@@ -17,7 +17,7 @@ const renameForm = reactive({
     name: ''
 })
 
-const openRenameDialog = (type: StorageType) => {
+const openRenameDialog = (type: StorageTypeDto) => {
     renameForm.id = type.id!;
     renameForm.name = type.name;
     renameDialogVisible.value = true;

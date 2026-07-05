@@ -1,12 +1,12 @@
 using Invee.Application.Models;
+using Invee.Application.Models.DTOs;
 using Invee.Data.Database;
-using Invee.Data.Database.Model;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 
 namespace Invee.Application.Queries.TagQueries
 {
-    public class GetTagsHandler : IRequestHandler<GetTags, OperationResult<List<Tag>>>
+    public class GetTagsHandler : IRequestHandler<GetTags, OperationResult<List<TagDto>>>
     {
         private readonly InveeContext _db;
 
@@ -15,9 +15,13 @@ namespace Invee.Application.Queries.TagQueries
             _db = db;
         }
 
-        public async Task<OperationResult<List<Tag>>> Handle(GetTags request, CancellationToken cancellationToken)
+        public async Task<OperationResult<List<TagDto>>> Handle(GetTags request, CancellationToken cancellationToken)
         {
-            var result = await _db.Tags.OrderBy(t => t.Name).ToListAsync(cancellationToken);
+            var result = await _db.Tags
+                .OrderBy(t => t.Name)
+                .Select(t => new TagDto { Id = t.Id, Name = t.Name })
+                .ToListAsync(cancellationToken);
+
             return OperationResult.Success(result);
         }
     }

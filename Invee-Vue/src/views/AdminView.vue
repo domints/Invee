@@ -1,6 +1,6 @@
 <script setup lang="ts">
 
-import { createCategory, createStorage, createStorageType, getCategoryTree, getStorages, getStorageTypes, setCategoryParent, setStorageParent, type StorageType } from '@/client';
+import { createCategory, createStorage, createStorageType, getCategoryTree, getStorages, getStorageTypes, setCategoryParent, setStorageParent, type StorageTypeDto } from '@/client';
 
 import CategoryTree from '@/components/CategoryTree.vue';
 
@@ -52,13 +52,13 @@ const createStorageForm = reactive({
 
 })
 
-const storageTypes = ref<StorageType[]>([])
+const storageTypes = ref<StorageTypeDto[]>([])
 
 
 
-const createStorageTypeDialogVisible = ref(false)
+const createStorageTypeDtoDialogVisible = ref(false)
 
-const createStorageTypeForm = reactive({
+const createStorageTypeDtoForm = reactive({
 
     name: ''
 
@@ -104,7 +104,7 @@ const refreshStorages = async () => {
 
 
 
-const refreshStorageTypes = async () => {
+const refreshStorageTypeDtos = async () => {
 
     storageTypes.value = (await getStorageTypes()).data ?? [];
 
@@ -118,7 +118,7 @@ const onRefreshClicked = async () => {
 
     refreshCategories();
 
-    refreshStorageTypes();
+    refreshStorageTypeDtos();
 
 };
 
@@ -212,31 +212,31 @@ const saveStorage = async () => {
 
 
 
-const openCreateStorageTypeDialog = () => {
+const openCreateStorageTypeDtoDialog = () => {
 
-    createStorageTypeForm.name = '';
+    createStorageTypeDtoForm.name = '';
 
-    createStorageTypeDialogVisible.value = true;
+    createStorageTypeDtoDialogVisible.value = true;
 
 };
 
 
 
-const saveStorageType = async () => {
+const saveStorageTypeDto = async () => {
 
-    createStorageTypeDialogVisible.value = false;
+    createStorageTypeDtoDialogVisible.value = false;
 
     await createStorageType({
 
         body: {
 
-            name: createStorageTypeForm.name
+            name: createStorageTypeDtoForm.name
 
         }
 
     });
 
-    await refreshStorageTypes();
+    await refreshStorageTypeDtos();
 
 }
 
@@ -364,13 +364,13 @@ const confirmMove = async (parentId: number | null) => {
 
             <template #header>
 
-                <CardHeader title="Storage types" button-text="Add +" @btn-clicked="openCreateStorageTypeDialog()">
+                <CardHeader title="Storage types" button-text="Add +" @btn-clicked="openCreateStorageTypeDtoDialog()">
 
                 </CardHeader>
 
             </template>
 
-            <StorageTypeList :types="storageTypes" @changed="refreshStorageTypes()"></StorageTypeList>
+            <StorageTypeList :types="storageTypes" @changed="refreshStorageTypeDtos()"></StorageTypeList>
 
         </el-card>
 
@@ -468,13 +468,13 @@ const confirmMove = async (parentId: number | null) => {
 
 
 
-    <el-dialog v-model="createStorageTypeDialogVisible" title="Create storage type">
+    <el-dialog v-model="createStorageTypeDtoDialogVisible" title="Create storage type">
 
-        <el-form :model="createStorageTypeForm">
+        <el-form :model="createStorageTypeDtoForm">
 
             <el-form-item label="Storage type name">
 
-                <el-input v-model="createStorageTypeForm.name" autocomplete="off" />
+                <el-input v-model="createStorageTypeDtoForm.name" autocomplete="off" />
 
             </el-form-item>
 
@@ -484,9 +484,9 @@ const confirmMove = async (parentId: number | null) => {
 
             <div class="dialog-footer">
 
-                <el-button @click="createStorageTypeDialogVisible = false">Cancel</el-button>
+                <el-button @click="createStorageTypeDtoDialogVisible = false">Cancel</el-button>
 
-                <el-button type="primary" @click="saveStorageType()">
+                <el-button type="primary" @click="saveStorageTypeDto()">
 
                     Confirm
 

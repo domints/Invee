@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Invee.Application.Commands.ImageCommands;
 using Invee.Application.Commands.ItemCommands;
 using Invee.Application.Models;
 using Invee.Application.Models.DTOs;
@@ -31,6 +32,11 @@ namespace Invee.Api.Endpoints
             group.MapParamPostCommand<BorrowReservation>("/{id:int}/borrowReservation");
             group.MapParamPostCommand<ReturnItem>("/{id:int}/return");
             group.MapParamPostCommand<CancelReservation>("/{id:int}/cancelReservation");
+
+            group.MapFileUploadCommand<IdParameter, UploadItemImage, int>("/{id:int}/images");
+            group.MapParamDeleteCommand<DeleteItemImage>("/{id:int}/images/{imageId:int}");
+            group.MapBodyAndParamPutCommand<IdParameter, ReorderItemImages>("/{id:int}/images/order");
+
             return group;
         }
     }

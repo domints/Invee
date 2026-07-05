@@ -1,6 +1,8 @@
 using System.IdentityModel.Tokens.Jwt;
 using System.Text.Json.Serialization;
 using Invee.Api.Endpoints;
+using Invee.Api.Services;
+using Invee.Application.Services;
 using Invee.Data.Database;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
@@ -78,6 +80,8 @@ builder.Services.AddAuthorizationBuilder()
     .SetFallbackPolicy(requireAuthPolicy);
 
 builder.Services.AddMediatR(cfg => cfg.RegisterServicesFromAssemblyContaining<Invee.Application.Marker>());
+
+builder.Services.AddScoped<IImageStore, DiskImageStore>();
 
 builder.Services.ConfigureHttpJsonOptions(options =>
 {

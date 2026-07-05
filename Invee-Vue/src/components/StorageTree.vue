@@ -1,12 +1,12 @@
 <script setup lang="ts">
-import { deleteStorage, updateStorage, type StorageTreeResponse, type StorageType } from '@/client';
+import { deleteStorage, updateStorage, type StorageTreeResponse, type StorageTypeDto } from '@/client';
 import { ElButton, ElDialog, ElForm, ElFormItem, ElInput, ElSelect, ElOption } from 'element-plus';
 import { Plus, Delete, Edit, Rank } from '@element-plus/icons-vue';
 import { reactive, ref } from 'vue';
 
 defineProps<{
     storage: StorageTreeResponse[]
-    storageTypes: StorageType[]
+    storageTypes: StorageTypeDto[]
 }>()
 const emit = defineEmits<{
     addChild: [parentId: number],

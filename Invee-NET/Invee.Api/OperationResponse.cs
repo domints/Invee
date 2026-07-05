@@ -28,8 +28,18 @@ namespace Invee.Api
                 return TypedResults.NotFound(new NotFoundResponse(notFoundOperationResult.NotFoundEntity!));
             if (result is FailedOperationResult<T> failedOperationResult)
                 return TypedResults.BadRequest(new ErrorResponse(failedOperationResult.Errors));
-
+                
             return TypedResults.Ok(result.Data);
         } 
+
+        public static Results<FileStreamHttpResult, BadRequest<ErrorResponse>, NotFound<NotFoundResponse>> ToStreamResponse(this OperationResult<StreamResult> result)
+        {
+            if (result is NotFoundOperationResult<StreamResult> notFoundOperationResult)
+                return TypedResults.NotFound(new NotFoundResponse(notFoundOperationResult.NotFoundEntity!));
+            if (result is FailedOperationResult<StreamResult> failedOperationResult)
+                return TypedResults.BadRequest(new ErrorResponse(failedOperationResult.Errors));
+
+            return TypedResults.Stream(result.Data!.Stream, result.Data!.ContentType);
+        }
     }
 }

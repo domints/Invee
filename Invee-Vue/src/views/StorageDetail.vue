@@ -1,8 +1,10 @@
 <script setup lang="ts">
-import { getStorage, getStorageBySlug, type GetStorageResponse } from '@/client';
+import { getStorage, getStorageBySlug, type GetStorageResponse, type ImageDto } from '@/client';
 import StorageList from '@/components/StorageList.vue';
 import ItemList from '@/components/ItemList.vue';
 import NewItemDialog from '@/components/NewItemDialog.vue';
+import ImageGallery from '@/components/ImageGallery.vue';
+import ImageUpload from '@/components/ImageUpload.vue';
 import { ElButton } from 'element-plus';
 import { ref, useTemplateRef } from 'vue'
 import { onBeforeRouteUpdate, useRoute } from 'vue-router'
@@ -16,6 +18,8 @@ const newItemDialog = useTemplateRef('newItemDialog');
 
 const storageId = ref(0);
 const storage = ref<GetStorageResponse>();
+const images = ref<ImageDto[]>([]);
+
 const reloadStorage = async (id: string) => {
     console.log(id);
     if (!isNaN(+id)) {
@@ -32,12 +36,23 @@ const reloadStorage = async (id: string) => {
 
 const route = useRoute();
 storage.value = await reloadStorage(<string>route.params.id);
+images.value = storage.value?.images ?? [];
 
 onBeforeRouteUpdate(async (to, from) => {
     if (to.params.id !== from.params.id) {
         storage.value = await reloadStorage(<string>to.params.id);
+        images.value = storage.value?.images ?? [];
     }
 });
+
+const onImageUploaded = async () => {
+    storage.value = await reloadStorage(<string>route.params.id);
+    images.value = storage.value?.images ?? [];
+};
+
+const onImageDeleted = (imageId: number) => {
+    images.value = images.value.filter(img => img.id !== imageId);
+};
 </script>
 <template>
     <div class="storage-header">
@@ -59,6 +74,21 @@ onBeforeRouteUpdate(async (to, from) => {
     </div>
 
     <StorageList v-if="storage?.childStorages?.length" :storage-items="storage.childStorages"></StorageList>
+
+    <div v-if="images.length || userStore.loggedIn" class="images-section">
+        <ImageGallery
+            :images="images"
+            entity-type="storage"
+            :entity-id="storageId"
+            @deleted="onImageDeleted"
+        />
+        <ImageUpload
+            v-if="userStore.loggedIn"
+            entity-type="storage"
+            :entity-id="storageId"
+            @uploaded="onImageUploaded"
+        />
+    </div>
 
     <div class="items-section">
         <ItemList v-if="storage?.items?.length" :items="storage.items" />
@@ -99,6 +129,13 @@ onBeforeRouteUpdate(async (to, from) => {
 
 .items-section {
     margin-top: 1rem;
+}
+
+.images-section {
+    margin-top: 1rem;
+    padding: 1rem;
+    background: var(--el-bg-color-overlay);
+    border-radius: 8px;
 }
 
 .empty-state {

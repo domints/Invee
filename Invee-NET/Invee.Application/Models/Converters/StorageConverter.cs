@@ -1,7 +1,3 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 using Invee.Application.Models.DTOs;
 using Invee.Data.Database.Model;
 
@@ -16,7 +12,7 @@ namespace Invee.Application.Models.Converters
                 Id = storage.Id,
                 Name = storage.Name,
                 Slug = storage.Slug,
-                Type = storage.Type!
+                Type = new StorageTypeDto { Id = storage.Type!.Id, Name = storage.Type.Name }
             };
         }
 

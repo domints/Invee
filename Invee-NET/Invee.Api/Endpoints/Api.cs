@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using Invee.Api.Models;
 using Invee.Application.Models;
 using Invee.Application.Queries;
+using Invee.Application.Queries.ImageQueries;
 using MediatR;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
@@ -23,6 +24,7 @@ namespace Invee.Api.Endpoints
             group.MapGroup("/tags").MapTags();
             group.MapGroup("/storages").MapStorages();
             group.MapGroup("/items").MapItems();
+            group.MapGroup("/images").MapImages();
 
             return group;
         }
@@ -38,6 +40,21 @@ namespace Invee.Api.Endpoints
             where T : IRequest<OperationResult<TResponse>>
         {
             group.MapGet(path, ParametersDelegate<T, TResponse>).WithName(GetEndpointName<T>());
+
+            return group;
+        }
+
+        /// <summary>
+        /// Maps GET request using route/query params and sends it as MediatR query, to respond with stream
+        /// </summary>
+        /// <typeparam name="T">Type of query</typeparam>
+        /// <param name="group">Route Group</param>
+        /// <param name="path">Resource URL</param>
+        /// <returns>Query result</returns>
+        public static RouteGroupBuilder MapStreamQuery<T>(this RouteGroupBuilder group, string path)
+            where T : IRequest<OperationResult<StreamResult>>
+        {
+            group.MapGet(path, StreamParametersDelegate<T>).WithName(GetEndpointName<T>());
 
             return group;
         }
@@ -227,6 +244,23 @@ namespace Invee.Api.Endpoints
         {
             group.MapDelete(path, ParametersAndBodyDelegate<TParams, TBody>).WithName(GetEndpointName<TBody>());
 
+            return group;
+        }
+
+        /// <summary>
+        /// Maps POST request with a multipart IFormFile and route/query params, constructs the command
+        /// via <see cref="IFileUploadCommand{TParams,TSelf}"/> and sends it as a MediatR command.
+        /// </summary>
+        public static RouteGroupBuilder MapFileUploadCommand<TParams, TCommand, TResponse>(this RouteGroupBuilder group, string path)
+            where TParams : class
+            where TCommand : class, IFileUploadCommand<TParams, TCommand>, IRequest<OperationResult<TResponse>>
+        {
+            group.MapPost(path, async ([AsParameters] TParams parameters, IFormFile file, IMediator mediator, CancellationToken ct) =>
+            {
+                await using var stream = file.OpenReadStream();
+                var command = TCommand.Create(parameters, stream, file.FileName, file.ContentType);
+                return (await mediator.Send(command, ct)).ToResponse();
+            }).WithName(GetEndpointName<TCommand>()).DisableAntiforgery();
             return group;
         }
 
@@ -471,6 +505,14 @@ namespace Invee.Api.Endpoints
             var result = await mediator.Send(parameters, cancellationToken);
                 
             return result.ToResponse();
+        }
+
+        private static async Task<Results<FileStreamHttpResult, BadRequest<ErrorResponse>, NotFound<NotFoundResponse>>> StreamParametersDelegate<TParams>([AsParameters] TParams parameters, IMediator mediator, CancellationToken cancellationToken)
+            where TParams : IRequest<OperationResult<StreamResult>>
+        {
+            var result = await mediator.Send(parameters, cancellationToken);
+                
+            return result.ToStreamResponse();
         }
 
         private static async Task<Results<Ok<TResponse>, BadRequest<ErrorResponse>, NotFound<NotFoundResponse>>> BodyDelegate<TBody, TResponse>([FromBody] TBody parameters, IMediator mediator, CancellationToken cancellationToken)

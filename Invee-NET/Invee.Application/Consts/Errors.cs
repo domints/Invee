@@ -16,5 +16,6 @@ namespace Invee.Application.Consts
         public static Error InvalidMove() => new Error("E-006", "Cannot move node under itself or its descendant");
         public static Error InvalidTagIds() => new Error("E-007", "One or more tag IDs are invalid");
         public static Error ContentsEmpty() => new Error("E-008", "Code contents cannot be empty");
+        public static Error InvalidImageIds() => new Error("E-009", "One or more image IDs are invalid");
     }
 }

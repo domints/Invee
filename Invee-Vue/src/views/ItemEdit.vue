@@ -11,17 +11,22 @@ import {
     updateItem,
     updateItemCode,
     type CategoryTreeResponse,
+    type ImageDto,
     type ItemCodeDto,
     type ItemResponse,
     type StorageTreeResponse,
-    type Tag,
+    type TagDto,
 } from '@/client';
-import { ElButton, ElDialog, ElForm, ElFormItem, ElInput, ElInputNumber, ElMessage, ElOption, ElRadio, ElRadioGroup, ElSelect, ElSwitch } from 'element-plus';
+import { ElButton, ElDatePicker, ElDialog, ElForm, ElFormItem, ElInput, ElInputNumber, ElMessage, ElOption, ElRadio, ElRadioGroup, ElSelect, ElSwitch } from 'element-plus';
 import { computed, ref } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
+import { useUserStore } from '@/stores/user';
+import ImageGallery from '@/components/ImageGallery.vue';
+import ImageUpload from '@/components/ImageUpload.vue';
 
 const route = useRoute();
 const router = useRouter();
+const userStore = useUserStore();
 const itemId = Number(route.params.id);
 
 const STOP_WORDS = new Set(['a', 'an', 'the', 'of', 'in', 'for', 'on', 'with', 'and', 'or', 'is', 'it', 'to', 'at', 'by']);
@@ -60,7 +65,7 @@ const flattenStorages = (nodes: StorageTreeResponse[], prefix = ''): { id: numbe
     return result;
 };
 
-const suggestTagIds = (name: string, allTags: Tag[]): number[] => {
+const suggestTagIds = (name: string, allTags: TagDto[]): number[] => {
     const words = name.toLowerCase().split(/\s+/).filter(w => w.length > 1 && !STOP_WORDS.has(w));
     return allTags.filter(t => words.includes(t.name.toLowerCase())).map(t => t.id!);
 };
@@ -73,7 +78,20 @@ const [itemResp, catResp, storResp, tagsResp] = await Promise.all([
 ]);
 
 const item = itemResp.data as ItemResponse;
-const allTags = ref<Tag[]>(tagsResp.data ?? []);
+const images = ref<ImageDto[]>(item.images ?? []);
+
+const onImageUploaded = async () => {
+    const refreshed = await getItem({ path: { id: itemId } });
+    if (refreshed.data) {
+        images.value = refreshed.data.images ?? [];
+    }
+};
+
+const onImageDeleted = (imageId: number) => {
+    images.value = images.value.filter(img => img.id !== imageId);
+};
+
+const allTags = ref<TagDto[]>(tagsResp.data ?? []);
 const categories = flattenCategories(catResp.data ?? []);
 const storages = flattenStorages(storResp.data ?? []);
 
@@ -87,6 +105,7 @@ const form = ref({
     quantity: item.quantity ?? null as number | null,
     level: item.level ?? null as number | null,
     broken: item.broken ?? false,
+    expiresAt: item.expiresAt ? new Date(item.expiresAt) : null as Date | null,
 });
 
 const isNewItem = !item.tags?.length;
@@ -183,7 +202,7 @@ const createAndAddTag = async () => {
     if (!name) return;
     const result = await createTag({ body: { name } });
     if (result.data != null) {
-        const newTag: Tag = { id: result.data, name };
+        const newTag: TagDto = { id: result.data, name };
         allTags.value.push(newTag);
         selectedTagIds.value.push(result.data);
         newTagInput.value = '';
@@ -206,6 +225,7 @@ const save = async () => {
                     quantityType: form.value.quantityType,
                     quantity: form.value.quantityType === 2 ? form.value.quantity : form.value.quantityType === 1 ? form.value.level : null,
                     broken: form.value.broken,
+                    expiresAt: form.value.expiresAt ? form.value.expiresAt.toISOString() : null,
                 },
             }),
             setItemTags({
@@ -230,6 +250,20 @@ const save = async () => {
         <div class="item-edit__header">
             <el-button @click="router.push({ name: 'item', params: { id: itemId } })">← Back</el-button>
             <h2>{{ form.name || 'Edit item' }}</h2>
+        </div>
+
+        <div class="item-edit__card">
+            <ImageGallery
+                :images="images"
+                entity-type="item"
+                :entity-id="itemId"
+                @deleted="onImageDeleted"
+            />
+            <ImageUpload
+                entity-type="item"
+                :entity-id="itemId"
+                @uploaded="onImageUploaded"
+            />
         </div>
 
         <el-form :model="form" label-width="140px" class="item-edit__form">
@@ -279,6 +313,16 @@ const save = async () => {
 
             <el-form-item label="Broken">
                 <el-switch v-model="form.broken" />
+            </el-form-item>
+
+            <el-form-item label="Expiry date">
+                <el-date-picker
+                    v-model="form.expiresAt"
+                    type="date"
+                    placeholder="No expiry"
+                    clearable
+                    style="width: 200px"
+                />
             </el-form-item>
 
             <el-form-item label="Tags">
@@ -368,6 +412,13 @@ const save = async () => {
         h2 {
             margin: 0;
         }
+    }
+
+    &__card {
+        background: var(--el-bg-color);
+        border-radius: 8px;
+        padding: 1.25rem 1.5rem;
+        margin-bottom: 1rem;
     }
 
     &__form {

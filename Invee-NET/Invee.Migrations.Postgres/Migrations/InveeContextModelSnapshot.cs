@@ -17,7 +17,7 @@ namespace Invee.Migrations.Postgres.Migrations
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "10.0.5")
+                .HasAnnotation("ProductVersion", "10.0.9")
                 .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
@@ -95,6 +95,34 @@ namespace Invee.Migrations.Postgres.Migrations
                     b.ToTable("Categories");
                 });
 
+            modelBuilder.Entity("Invee.Data.Database.Model.Image", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("ContentType")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("FileName")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("StoredPath")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Images");
+                });
+
             modelBuilder.Entity("Invee.Data.Database.Model.Item", b =>
                 {
                     b.Property<int>("Id")
@@ -168,6 +196,24 @@ namespace Invee.Migrations.Postgres.Migrations
                     b.ToTable("ItemCodes");
                 });
 
+            modelBuilder.Entity("Invee.Data.Database.Model.ItemImage", b =>
+                {
+                    b.Property<int>("ItemId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("ImageId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("Order")
+                        .HasColumnType("integer");
+
+                    b.HasKey("ItemId", "ImageId");
+
+                    b.HasIndex("ImageId");
+
+                    b.ToTable("ItemImages");
+                });
+
             modelBuilder.Entity("Invee.Data.Database.Model.ItemTag", b =>
                 {
                     b.Property<int>("ItemId")
@@ -211,6 +257,24 @@ namespace Invee.Migrations.Postgres.Migrations
                     b.HasIndex("TypeId");
 
                     b.ToTable("Storages");
+                });
+
+            modelBuilder.Entity("Invee.Data.Database.Model.StorageImage", b =>
+                {
+                    b.Property<int>("StorageId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("ImageId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("Order")
+                        .HasColumnType("integer");
+
+                    b.HasKey("StorageId", "ImageId");
+
+                    b.HasIndex("ImageId");
+
+                    b.ToTable("StorageImages");
                 });
 
             modelBuilder.Entity("Invee.Data.Database.Model.StorageType", b =>
@@ -297,6 +361,25 @@ namespace Invee.Migrations.Postgres.Migrations
                     b.Navigation("Item");
                 });
 
+            modelBuilder.Entity("Invee.Data.Database.Model.ItemImage", b =>
+                {
+                    b.HasOne("Invee.Data.Database.Model.Image", "Image")
+                        .WithMany("ItemImages")
+                        .HasForeignKey("ImageId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Invee.Data.Database.Model.Item", "Item")
+                        .WithMany("Images")
+                        .HasForeignKey("ItemId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Image");
+
+                    b.Navigation("Item");
+                });
+
             modelBuilder.Entity("Invee.Data.Database.Model.ItemTag", b =>
                 {
                     b.HasOne("Invee.Data.Database.Model.Item", "Item")
@@ -333,6 +416,25 @@ namespace Invee.Migrations.Postgres.Migrations
                     b.Navigation("Type");
                 });
 
+            modelBuilder.Entity("Invee.Data.Database.Model.StorageImage", b =>
+                {
+                    b.HasOne("Invee.Data.Database.Model.Image", "Image")
+                        .WithMany("StorageImages")
+                        .HasForeignKey("ImageId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Invee.Data.Database.Model.Storage", "Storage")
+                        .WithMany("Images")
+                        .HasForeignKey("StorageId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Image");
+
+                    b.Navigation("Storage");
+                });
+
             modelBuilder.Entity("Invee.Data.Database.Model.Category", b =>
                 {
                     b.Navigation("Children");
@@ -340,13 +442,27 @@ namespace Invee.Migrations.Postgres.Migrations
                     b.Navigation("Items");
                 });
 
+            modelBuilder.Entity("Invee.Data.Database.Model.Image", b =>
+                {
+                    b.Navigation("ItemImages");
+
+                    b.Navigation("StorageImages");
+                });
+
             modelBuilder.Entity("Invee.Data.Database.Model.Item", b =>
                 {
                     b.Navigation("Borrowings");
 
+                    b.Navigation("Images");
+
                     b.Navigation("ItemCodes");
 
                     b.Navigation("ItemTags");
+                });
+
+            modelBuilder.Entity("Invee.Data.Database.Model.Storage", b =>
+                {
+                    b.Navigation("Images");
                 });
 
             modelBuilder.Entity("Invee.Data.Database.Model.Tag", b =>

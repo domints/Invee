@@ -10,21 +10,6 @@ export type AddItemCode = {
     id: number;
 };
 
-export type Borrowing = {
-    id?: number;
-    borrower: string;
-    itemId?: number;
-    status?: BorrowingStatus;
-    expectedStart?: null | string;
-    expectedReturn?: null | string;
-    created?: null | string;
-    borrowed?: null | string;
-    returned?: null | string;
-    incomplete?: boolean;
-    comment?: null | string;
-    item?: null | Item;
-};
-
 export type BorrowingDto = {
     status?: BorrowingStatus;
     start?: null | string;
@@ -43,16 +28,6 @@ export type BorrowItem = {
     incomplete: boolean;
     comment: null | string;
     id: number;
-};
-
-export type Category = {
-    id?: number;
-    parentId?: null | number;
-    name: string;
-    slug?: null | string;
-    parent?: null | Category;
-    children?: Array<Category>;
-    items?: Array<Item>;
 };
 
 export type CategoryDto = {
@@ -111,31 +86,12 @@ export type ErrorResponse = {
     errors: Array<Error>;
 };
 
-export type Item = {
-    id?: number;
-    name: string;
-    categoryId?: number;
-    storageId?: number;
-    quantity?: null | number;
-    quantityType?: QuantityType;
-    note?: null | string;
-    slug?: null | string;
-    broken?: boolean;
-    addedAt?: string;
-    expiresAt?: null | string;
-    category?: null | Category;
-    storage?: null | Storage;
-    borrowings?: null | Array<Borrowing>;
-    itemTags?: null | Array<ItemTag>;
-    itemCodes?: null | Array<ItemCode>;
-};
+export type IFormFile = Blob | File;
 
-export type ItemCode = {
+export type ImageDto = {
     id?: number;
-    itemId?: number;
-    codeType?: CodeType;
-    contents: string;
-    item?: null | Item;
+    url: string;
+    order?: number;
 };
 
 export type ItemCodeDto = {
@@ -174,13 +130,7 @@ export type ItemResponse = {
     borrowings?: Array<BorrowingDto>;
     tags?: Array<string>;
     codes?: Array<ItemCodeDto>;
-};
-
-export type ItemTag = {
-    itemId?: number;
-    tagId?: number;
-    item?: null | Item;
-    tag?: null | Tag;
+    images?: Array<ImageDto>;
 };
 
 export type NotFoundResponse = {
@@ -225,31 +175,22 @@ export type SetStorageParent = {
     id: number;
 };
 
-export type Storage = {
-    id?: number;
-    parentId?: null | number;
-    typeId?: number;
-    name: string;
-    slug?: null | string;
-    type?: null | StorageType;
-    parent?: null | Storage;
-};
-
 export type StorageItemsResponse = {
     id?: number;
     name: string;
-    type: StorageType;
+    type: StorageTypeDto;
     parentId?: null | number;
     parentSlug?: null | string;
     childStorages?: Array<StorageListEntry>;
     items?: Array<ItemListEntry>;
+    images?: Array<ImageDto>;
 };
 
 export type StorageListEntry = {
     id?: number;
     name: string;
     slug?: null | string;
-    type: StorageType;
+    type: StorageTypeDto;
 };
 
 export type StorageTreeResponse = {
@@ -260,15 +201,14 @@ export type StorageTreeResponse = {
     children?: Array<StorageTreeResponse>;
 };
 
-export type StorageType = {
+export type StorageTypeDto = {
     id?: number;
     name: string;
 };
 
-export type Tag = {
+export type TagDto = {
     id?: number;
     name: string;
-    itemTags?: null | Array<ItemTag>;
 };
 
 export type UpdateItem = {
@@ -334,6 +274,124 @@ export type GetLoggedInUserInfoResponses = {
 };
 
 export type GetLoggedInUserInfoResponse = GetLoggedInUserInfoResponses[keyof GetLoggedInUserInfoResponses];
+
+export type UploadItemImageData = {
+    body: {
+        file: IFormFile;
+    };
+    path: {
+        id: number;
+    };
+    query?: never;
+    url: '/api/items/{id}/images';
+};
+
+export type UploadItemImageResponses = {
+    /**
+     * OK
+     */
+    200: unknown;
+};
+
+export type DeleteItemImageData = {
+    body?: never;
+    path: {
+        id: number;
+        imageId: number;
+    };
+    query?: never;
+    url: '/api/items/{id}/images/{imageId}';
+};
+
+export type DeleteItemImageResponses = {
+    /**
+     * OK
+     */
+    200: unknown;
+};
+
+export type ReorderItemImagesData = {
+    body: Array<number>;
+    path: {
+        id: number;
+    };
+    query?: never;
+    url: '/api/items/{id}/images/order';
+};
+
+export type ReorderItemImagesResponses = {
+    /**
+     * OK
+     */
+    200: unknown;
+};
+
+export type UploadStorageImageData = {
+    body: {
+        file: IFormFile;
+    };
+    path: {
+        id: number;
+    };
+    query?: never;
+    url: '/api/storages/{id}/images';
+};
+
+export type UploadStorageImageResponses = {
+    /**
+     * OK
+     */
+    200: unknown;
+};
+
+export type DeleteStorageImageData = {
+    body?: never;
+    path: {
+        id: number;
+        imageId: number;
+    };
+    query?: never;
+    url: '/api/storages/{id}/images/{imageId}';
+};
+
+export type DeleteStorageImageResponses = {
+    /**
+     * OK
+     */
+    200: unknown;
+};
+
+export type ReorderStorageImagesData = {
+    body: Array<number>;
+    path: {
+        id: number;
+    };
+    query?: never;
+    url: '/api/storages/{id}/images/order';
+};
+
+export type ReorderStorageImagesResponses = {
+    /**
+     * OK
+     */
+    200: unknown;
+};
+
+export type GetImageData = {
+    body?: never;
+    path: {
+        id: number;
+    };
+    query?: never;
+    url: '/api/images/{id}';
+};
+
+export type GetImageResponses = {
+    /**
+     * OK
+     */
+    200: unknown;
+};
 
 export type GetCategoryTreeData = {
     body?: never;
@@ -566,7 +624,7 @@ export type GetStorageTypesResponses = {
     /**
      * OK
      */
-    200: Array<StorageType>;
+    200: Array<StorageTypeDto>;
 };
 
 export type GetStorageTypesResponse = GetStorageTypesResponses[keyof GetStorageTypesResponses];
@@ -682,7 +740,7 @@ export type GetTagsResponses = {
     /**
      * OK
      */
-    200: Array<Tag>;
+    200: Array<TagDto>;
 };
 
 export type GetTagsResponse = GetTagsResponses[keyof GetTagsResponses];

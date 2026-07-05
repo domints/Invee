@@ -26,5 +26,6 @@ namespace Invee.Data.Database.Model
         public virtual ICollection<Borrowing>? Borrowings { get; set; }
         public virtual ICollection<ItemTag>? ItemTags { get; set; }
         public virtual ICollection<ItemCode>? ItemCodes { get; set; }
+        public virtual ICollection<ItemImage>? Images { get; set; }
     }
 }

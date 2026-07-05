@@ -1,0 +1,12 @@
+using Invee.Application.Models;
+using MediatR;
+
+namespace Invee.Application.Commands.ImageCommands
+{
+    public record UploadStorageImage(int Id, Stream Stream, string FileName, string ContentType)
+        : IdParameter(Id), IRequest<OperationResult<int>>, IFileUploadCommand<IdParameter, UploadStorageImage>
+    {
+        public static UploadStorageImage Create(IdParameter p, Stream stream, string fileName, string contentType)
+            => new(p.Id, stream, fileName, contentType);
+    }
+}
