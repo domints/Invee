@@ -8,6 +8,7 @@ using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication.OpenIdConnect;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Protocols.OpenIdConnect;
 using Microsoft.OpenApi;
@@ -73,6 +74,10 @@ builder.Services.AddAuthentication(options =>
             context.Response.Headers["Access-Control-Expose-Headers"] = "OAuth-Redirect";
             context.HandleResponse();
         }
+        else if (!string.IsNullOrEmpty(redirectBaseUrl))
+        {
+            context.ProtocolMessage.RedirectUri = redirectBaseUrl.TrimEnd('/') + "/signin-oidc";
+        }
         return Task.CompletedTask;
     };
 });
@@ -133,6 +138,10 @@ if (app.Environment.IsDevelopment())
 
 app.UseCors();
 app.UseStaticFiles();
+app.UseForwardedHeaders(new ForwardedHeadersOptions
+{
+    ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto
+});
 app.UseAuthentication();
 app.UseAuthorization();
 
