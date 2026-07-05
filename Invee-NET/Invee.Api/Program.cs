@@ -42,7 +42,10 @@ builder.Services.AddAuthentication(options =>
     options.DefaultScheme = CookieAuthenticationDefaults.AuthenticationScheme;
     options.DefaultChallengeScheme = OpenIdConnectDefaults.AuthenticationScheme;
 })
-.AddCookie()
+.AddCookie(options =>
+{
+    options.SessionStore = new MemoryCacheTicketStore();
+})
 .AddOpenIdConnect(options =>
 {
     var oidcConfig = builder.Configuration.GetSection("OpenIDConnectSettings");
@@ -94,8 +97,8 @@ builder.Services.AddScoped<IImageStore, DiskImageStore>();
 
 builder.Services.ConfigureHttpJsonOptions(options =>
 {
-	// Tell OpenApi generator to report number fields as integers/floats only, not strings
-	options.SerializerOptions.NumberHandling = JsonNumberHandling.Strict;
+    // Tell OpenApi generator to report number fields as integers/floats only, not strings
+    options.SerializerOptions.NumberHandling = JsonNumberHandling.Strict;
 });
 
 var dbType = builder.Configuration.GetValue<string>("Database:Type");
@@ -145,7 +148,11 @@ app.UseForwardedHeaders(new ForwardedHeadersOptions
 app.UseAuthentication();
 app.UseAuthorization();
 
+app.Use(async (cx, next) =>
+{
 
+    await next();
+});
 app.MapGroup("/api")
     .MapApis();
 
