@@ -20,6 +20,7 @@ namespace Invee.Api.Endpoints
             group.MapGet("/user/login", (HttpContext context, IMediator mediator, CancellationToken cancellationToken) => mediator.Send(new UserInfo(context.User), cancellationToken)).WithName("GetLoggedInUserInfo");
             group.MapGroup("/categories").MapCategories();
             group.MapGroup("/storageTypes").MapStorageTypes();
+            group.MapGroup("/tags").MapTags();
             group.MapGroup("/storages").MapStorages();
             group.MapGroup("/items").MapItems();
 

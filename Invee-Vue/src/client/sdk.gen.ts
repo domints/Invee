@@ -2,7 +2,7 @@
 
 import type { Client, Options as Options2, TDataShape } from './client';
 import { client } from './client.gen';
-import type { BorrowItemData, BorrowItemErrors, BorrowItemResponses, BorrowReservationData, BorrowReservationErrors, BorrowReservationResponses, CancelReservationData, CancelReservationErrors, CancelReservationResponses, CreateCategoryData, CreateCategoryErrors, CreateCategoryResponses, CreateItemData, CreateItemErrors, CreateItemResponses, CreateStorageData, CreateStorageErrors, CreateStorageResponses, CreateStorageTypeData, CreateStorageTypeErrors, CreateStorageTypeResponses, DeleteCategoryData, DeleteCategoryErrors, DeleteCategoryResponses, GetAllItemsData, GetAllItemsErrors, GetAllItemsResponses, GetCategoryData, GetCategoryErrors, GetCategoryItemsData, GetCategoryItemsErrors, GetCategoryItemsResponses, GetCategoryResponses, GetCategoryTreeData, GetCategoryTreeErrors, GetCategoryTreeResponses, GetItemData, GetItemErrors, GetItemResponses, GetLoggedInUserInfoData, GetLoggedInUserInfoResponses, GetRootStorageData, GetRootStorageErrors, GetRootStorageResponses, GetStorageBySlugData, GetStorageBySlugErrors, GetStorageBySlugResponses, GetStorageData, GetStorageErrors, GetStorageResponses, GetStoragesData, GetStoragesErrors, GetStoragesResponses, GetStorageTypesData, GetStorageTypesErrors, GetStorageTypesResponses, GetUserInfoData, GetUserInfoResponses, RenameCategoryData, RenameCategoryErrors, RenameCategoryResponses, ReserveItemData, ReserveItemErrors, ReserveItemResponses, ReturnItemData, ReturnItemErrors, ReturnItemResponses, SetCategoryParentData, SetCategoryParentErrors, SetCategoryParentResponses } from './types.gen';
+import type { AddItemCodeData, AddItemCodeErrors, AddItemCodeResponses, BorrowItemData, BorrowItemErrors, BorrowItemResponses, BorrowReservationData, BorrowReservationErrors, BorrowReservationResponses, CancelReservationData, CancelReservationErrors, CancelReservationResponses, CreateCategoryData, CreateCategoryErrors, CreateCategoryResponses, CreateItemData, CreateItemErrors, CreateItemResponses, CreateStorageData, CreateStorageErrors, CreateStorageResponses, CreateStorageTypeData, CreateStorageTypeErrors, CreateStorageTypeResponses, CreateTagData, CreateTagErrors, CreateTagResponses, DeleteCategoryData, DeleteCategoryErrors, DeleteCategoryResponses, DeleteItemCodeData, DeleteItemCodeErrors, DeleteItemCodeResponses, DeleteStorageData, DeleteStorageErrors, DeleteStorageResponses, DeleteStorageTypeData, DeleteStorageTypeErrors, DeleteStorageTypeResponses, DeleteTagData, DeleteTagErrors, DeleteTagResponses, GetAllItemsData, GetAllItemsErrors, GetAllItemsResponses, GetCategoryData, GetCategoryErrors, GetCategoryItemsData, GetCategoryItemsErrors, GetCategoryItemsResponses, GetCategoryResponses, GetCategoryTreeData, GetCategoryTreeErrors, GetCategoryTreeResponses, GetExpiringItemsData, GetExpiringItemsErrors, GetExpiringItemsResponses, GetItemData, GetItemErrors, GetItemResponses, GetLoggedInUserInfoData, GetLoggedInUserInfoResponses, GetRootStorageData, GetRootStorageErrors, GetRootStorageResponses, GetStorageBySlugData, GetStorageBySlugErrors, GetStorageBySlugResponses, GetStorageData, GetStorageErrors, GetStorageResponses, GetStoragesData, GetStoragesErrors, GetStoragesResponses, GetStorageTypesData, GetStorageTypesErrors, GetStorageTypesResponses, GetTagsData, GetTagsErrors, GetTagsResponses, GetUserInfoData, GetUserInfoResponses, LookupItemByCodeData, LookupItemByCodeErrors, LookupItemByCodeResponses, RenameCategoryData, RenameCategoryErrors, RenameCategoryResponses, RenameStorageTypeData, RenameStorageTypeErrors, RenameStorageTypeResponses, ReserveItemData, ReserveItemErrors, ReserveItemResponses, ReturnItemData, ReturnItemErrors, ReturnItemResponses, SetCategoryParentData, SetCategoryParentErrors, SetCategoryParentResponses, SetItemTagsData, SetItemTagsErrors, SetItemTagsResponses, SetStorageParentData, SetStorageParentErrors, SetStorageParentResponses, UpdateItemCodeData, UpdateItemCodeErrors, UpdateItemCodeResponses, UpdateItemData, UpdateItemErrors, UpdateItemResponses, UpdateStorageData, UpdateStorageErrors, UpdateStorageResponses } from './types.gen';
 
 export type Options<TData extends TDataShape = TDataShape, ThrowOnError extends boolean = boolean> = Options2<TData, ThrowOnError> & {
     /**
@@ -48,7 +48,14 @@ export const renameCategory = <ThrowOnError extends boolean = false>(options: Op
 
 export const getCategoryItems = <ThrowOnError extends boolean = false>(options: Options<GetCategoryItemsData, ThrowOnError>) => (options.client ?? client).get<GetCategoryItemsResponses, GetCategoryItemsErrors, ThrowOnError>({ url: '/api/categories/{id}/items', ...options });
 
-export const setCategoryParent = <ThrowOnError extends boolean = false>(options: Options<SetCategoryParentData, ThrowOnError>) => (options.client ?? client).post<SetCategoryParentResponses, SetCategoryParentErrors, ThrowOnError>({ url: '/api/categories/{id}/setParent/{parentId}', ...options });
+export const setCategoryParent = <ThrowOnError extends boolean = false>(options: Options<SetCategoryParentData, ThrowOnError>) => (options.client ?? client).post<SetCategoryParentResponses, SetCategoryParentErrors, ThrowOnError>({
+    url: '/api/categories/{id}/setParent',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
 
 export const getStorageTypes = <ThrowOnError extends boolean = false>(options?: Options<GetStorageTypesData, ThrowOnError>) => (options?.client ?? client).get<GetStorageTypesResponses, GetStorageTypesErrors, ThrowOnError>({ url: '/api/storageTypes', ...options });
 
@@ -60,6 +67,30 @@ export const createStorageType = <ThrowOnError extends boolean = false>(options?
         ...options?.headers
     }
 });
+
+export const deleteStorageType = <ThrowOnError extends boolean = false>(options: Options<DeleteStorageTypeData, ThrowOnError>) => (options.client ?? client).delete<DeleteStorageTypeResponses, DeleteStorageTypeErrors, ThrowOnError>({ url: '/api/storageTypes/{id}', ...options });
+
+export const renameStorageType = <ThrowOnError extends boolean = false>(options: Options<RenameStorageTypeData, ThrowOnError>) => (options.client ?? client).put<RenameStorageTypeResponses, RenameStorageTypeErrors, ThrowOnError>({
+    url: '/api/storageTypes/{id}',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+export const getTags = <ThrowOnError extends boolean = false>(options?: Options<GetTagsData, ThrowOnError>) => (options?.client ?? client).get<GetTagsResponses, GetTagsErrors, ThrowOnError>({ url: '/api/tags', ...options });
+
+export const createTag = <ThrowOnError extends boolean = false>(options?: Options<CreateTagData, ThrowOnError>) => (options?.client ?? client).post<CreateTagResponses, CreateTagErrors, ThrowOnError>({
+    url: '/api/tags',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options?.headers
+    }
+});
+
+export const deleteTag = <ThrowOnError extends boolean = false>(options: Options<DeleteTagData, ThrowOnError>) => (options.client ?? client).delete<DeleteTagResponses, DeleteTagErrors, ThrowOnError>({ url: '/api/tags/{id}', ...options });
 
 export const getStorages = <ThrowOnError extends boolean = false>(options?: Options<GetStoragesData, ThrowOnError>) => (options?.client ?? client).get<GetStoragesResponses, GetStoragesErrors, ThrowOnError>({ url: '/api/storages', ...options });
 
@@ -74,9 +105,29 @@ export const createStorage = <ThrowOnError extends boolean = false>(options?: Op
 
 export const getRootStorage = <ThrowOnError extends boolean = false>(options?: Options<GetRootStorageData, ThrowOnError>) => (options?.client ?? client).get<GetRootStorageResponses, GetRootStorageErrors, ThrowOnError>({ url: '/api/storages/root', ...options });
 
+export const deleteStorage = <ThrowOnError extends boolean = false>(options: Options<DeleteStorageData, ThrowOnError>) => (options.client ?? client).delete<DeleteStorageResponses, DeleteStorageErrors, ThrowOnError>({ url: '/api/storages/{id}', ...options });
+
 export const getStorage = <ThrowOnError extends boolean = false>(options: Options<GetStorageData, ThrowOnError>) => (options.client ?? client).get<GetStorageResponses, GetStorageErrors, ThrowOnError>({ url: '/api/storages/{id}', ...options });
 
+export const updateStorage = <ThrowOnError extends boolean = false>(options: Options<UpdateStorageData, ThrowOnError>) => (options.client ?? client).put<UpdateStorageResponses, UpdateStorageErrors, ThrowOnError>({
+    url: '/api/storages/{id}',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
 export const getStorageBySlug = <ThrowOnError extends boolean = false>(options: Options<GetStorageBySlugData, ThrowOnError>) => (options.client ?? client).get<GetStorageBySlugResponses, GetStorageBySlugErrors, ThrowOnError>({ url: '/api/storages/slug/{slug}', ...options });
+
+export const setStorageParent = <ThrowOnError extends boolean = false>(options: Options<SetStorageParentData, ThrowOnError>) => (options.client ?? client).post<SetStorageParentResponses, SetStorageParentErrors, ThrowOnError>({
+    url: '/api/storages/{id}/setParent',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
 
 export const getAllItems = <ThrowOnError extends boolean = false>(options?: Options<GetAllItemsData, ThrowOnError>) => (options?.client ?? client).get<GetAllItemsResponses, GetAllItemsErrors, ThrowOnError>({ url: '/api/items', ...options });
 
@@ -90,6 +141,48 @@ export const createItem = <ThrowOnError extends boolean = false>(options?: Optio
 });
 
 export const getItem = <ThrowOnError extends boolean = false>(options: Options<GetItemData, ThrowOnError>) => (options.client ?? client).get<GetItemResponses, GetItemErrors, ThrowOnError>({ url: '/api/items/{id}', ...options });
+
+export const updateItem = <ThrowOnError extends boolean = false>(options: Options<UpdateItemData, ThrowOnError>) => (options.client ?? client).put<UpdateItemResponses, UpdateItemErrors, ThrowOnError>({
+    url: '/api/items/{id}',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+export const setItemTags = <ThrowOnError extends boolean = false>(options: Options<SetItemTagsData, ThrowOnError>) => (options.client ?? client).put<SetItemTagsResponses, SetItemTagsErrors, ThrowOnError>({
+    url: '/api/items/{id}/tags',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+export const lookupItemByCode = <ThrowOnError extends boolean = false>(options: Options<LookupItemByCodeData, ThrowOnError>) => (options.client ?? client).get<LookupItemByCodeResponses, LookupItemByCodeErrors, ThrowOnError>({ url: '/api/items/byCode', ...options });
+
+export const getExpiringItems = <ThrowOnError extends boolean = false>(options?: Options<GetExpiringItemsData, ThrowOnError>) => (options?.client ?? client).get<GetExpiringItemsResponses, GetExpiringItemsErrors, ThrowOnError>({ url: '/api/items/expiring', ...options });
+
+export const addItemCode = <ThrowOnError extends boolean = false>(options: Options<AddItemCodeData, ThrowOnError>) => (options.client ?? client).post<AddItemCodeResponses, AddItemCodeErrors, ThrowOnError>({
+    url: '/api/items/{id}/codes',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+export const deleteItemCode = <ThrowOnError extends boolean = false>(options: Options<DeleteItemCodeData, ThrowOnError>) => (options.client ?? client).delete<DeleteItemCodeResponses, DeleteItemCodeErrors, ThrowOnError>({ url: '/api/items/{id}/codes/{codeId}', ...options });
+
+export const updateItemCode = <ThrowOnError extends boolean = false>(options: Options<UpdateItemCodeData, ThrowOnError>) => (options.client ?? client).put<UpdateItemCodeResponses, UpdateItemCodeErrors, ThrowOnError>({
+    url: '/api/items/{id}/codes/{codeId}',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
 
 export const reserveItem = <ThrowOnError extends boolean = false>(options: Options<ReserveItemData, ThrowOnError>) => (options.client ?? client).post<ReserveItemResponses, ReserveItemErrors, ThrowOnError>({
     url: '/api/items/{id}/reserve',

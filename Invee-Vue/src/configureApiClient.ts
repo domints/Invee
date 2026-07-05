@@ -17,7 +17,8 @@ export const createClientConfig: CreateClientConfig = (config) => {
     //console.log(config);
     return {
         ...config,
-        credentials: "include"
+        credentials: "include",
+        baseUrl: import.meta.env.VITE_API_BASE_URL ?? "/"
     };
 };
 

@@ -23,3 +23,19 @@ export const slugId = (item: { id?: number | null, slug?: string | null } | unde
             id: item?.slug ?? item?.id
         }
     }
+
+const quantityLevelLabels: Record<number, string> = {
+    0: 'None',
+    1: 'Low',
+    2: 'Good',
+}
+
+export function formatItemQuantity(item: { quantityType?: number, quantity?: number | null, level?: number | null }): string | null {
+    if (item.quantityType === 2 && item.quantity != null) {
+        return `× ${item.quantity}`
+    }
+    if (item.quantityType === 1 && item.level != null) {
+        return quantityLevelLabels[item.level] ?? null
+    }
+    return null
+}

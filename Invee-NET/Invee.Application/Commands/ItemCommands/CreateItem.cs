@@ -1,11 +1,9 @@
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 using Invee.Application.Models;
+using Invee.Data.Enums;
 using MediatR;
 
 namespace Invee.Application.Commands.ItemCommands
 {
-    public record CreateItem(string Name, int CategoryId, int StorageId, string? Slug) : IRequest<OperationResult<int>>;
+    public record CreateItem(string Name, int CategoryId, int StorageId, string? Slug, QuantityType QuantityType = QuantityType.None, DateTime? ExpiresAt = null) : IRequest<OperationResult<int>>;
 }

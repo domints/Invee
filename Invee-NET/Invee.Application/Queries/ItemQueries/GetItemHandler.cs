@@ -27,6 +27,9 @@ namespace Invee.Application.Queries.ItemQueries
                 .Include(i => i.Category)
                 .Include(i => i.Storage)
                 .Include(i => i.Borrowings)
+                .Include(i => i.ItemTags)
+                    .ThenInclude(it => it.Tag)
+                .Include(i => i.ItemCodes)
                 .FirstOrDefaultAsync(i => i.Id == request.Id);
             if (item == null)
                 return OperationResult<ItemResponse>.NotFound(nameof(Item));
@@ -37,6 +40,9 @@ namespace Invee.Application.Queries.ItemQueries
                 Slug = item.Slug,
                 Name = item.Name,
                 Note = item.Note,
+                Broken = item.Broken,
+                AddedAt = item.AddedAt,
+                ExpiresAt = item.ExpiresAt,
                 QuantityType = item.QuantityType,
                 Quantity = item.QuantityType == Data.Enums.QuantityType.Precise ? item.Quantity : null,
                 Level = item.QuantityType == Data.Enums.QuantityType.Levels ? (Data.Enums.QuantityLevel)item.Quantity! : null,
@@ -63,7 +69,9 @@ namespace Invee.Application.Queries.ItemQueries
                         Data.Enums.BorrowingStatus.Returned => b.Returned,
                         _ => b.Created
                     }
-                }).ToList()
+                }).ToList(),
+                Tags = item.ItemTags!.Select(it => it.Tag!.Name).OrderBy(n => n).ToList(),
+                Codes = item.ItemCodes!.Select(c => new ItemCodeDto(c.Id, c.CodeType, c.Contents)).ToList()
             };
 
             return OperationResult.Success(result);

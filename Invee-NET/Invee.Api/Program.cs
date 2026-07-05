@@ -94,6 +94,11 @@ switch (dbType)
             options.UseSqlite(builder.Configuration.GetValue<string>("Database:ConnectionString"),
              x => x.MigrationsAssembly(typeof(Invee.Migrations.Sqlite.Marker).Assembly)));
         break;
+    case "postgres":
+        builder.Services.AddDbContext<InveeContext>(options =>
+            options.UseNpgsql(builder.Configuration.GetValue<string>("Database:ConnectionString"),
+             x => x.MigrationsAssembly(typeof(Invee.Migrations.Postgres.Marker).Assembly)));
+        break;
     default:
         throw new NotSupportedException($"Database type <{dbType}> is not supported (yet?).");
 }
@@ -123,7 +128,11 @@ app.UseCors();
 app.UseAuthentication();
 app.UseAuthorization();
 
+app.UseStaticFiles();
 app.MapGroup("/api")
     .MapApis();
+
+app.MapFallbackToFile("index.html")
+    .AllowAnonymous();
 
 app.Run();

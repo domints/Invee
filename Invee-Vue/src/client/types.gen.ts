@@ -4,6 +4,27 @@ export type ClientOptions = {
     baseUrl: 'http://localhost:5231/' | (string & {});
 };
 
+export type AddItemCode = {
+    codeType: CodeType;
+    contents: string;
+    id: number;
+};
+
+export type Borrowing = {
+    id?: number;
+    borrower: string;
+    itemId?: number;
+    status?: BorrowingStatus;
+    expectedStart?: null | string;
+    expectedReturn?: null | string;
+    created?: null | string;
+    borrowed?: null | string;
+    returned?: null | string;
+    incomplete?: boolean;
+    comment?: null | string;
+    item?: null | Item;
+};
+
 export type BorrowingDto = {
     status?: BorrowingStatus;
     start?: null | string;
@@ -24,6 +45,16 @@ export type BorrowItem = {
     id: number;
 };
 
+export type Category = {
+    id?: number;
+    parentId?: null | number;
+    name: string;
+    slug?: null | string;
+    parent?: null | Category;
+    children?: Array<Category>;
+    items?: Array<Item>;
+};
+
 export type CategoryDto = {
     id?: number;
     parentId?: null | number;
@@ -39,6 +70,8 @@ export type CategoryTreeResponse = {
     children?: Array<CategoryTreeResponse>;
 };
 
+export type CodeType = number;
+
 export type CreateCategory = {
     name: string;
     parentId: null | number;
@@ -50,6 +83,8 @@ export type CreateItem = {
     categoryId: number;
     storageId: number;
     slug: null | string;
+    quantityType?: QuantityType;
+    expiresAt?: null | string;
 };
 
 export type CreateStorage = {
@@ -63,6 +98,10 @@ export type CreateStorageType = {
     name: string;
 };
 
+export type CreateTag = {
+    name: string;
+};
+
 export type Error = {
     code: string;
     message: string;
@@ -70,6 +109,39 @@ export type Error = {
 
 export type ErrorResponse = {
     errors: Array<Error>;
+};
+
+export type Item = {
+    id?: number;
+    name: string;
+    categoryId?: number;
+    storageId?: number;
+    quantity?: null | number;
+    quantityType?: QuantityType;
+    note?: null | string;
+    slug?: null | string;
+    broken?: boolean;
+    addedAt?: string;
+    expiresAt?: null | string;
+    category?: null | Category;
+    storage?: null | Storage;
+    borrowings?: null | Array<Borrowing>;
+    itemTags?: null | Array<ItemTag>;
+    itemCodes?: null | Array<ItemCode>;
+};
+
+export type ItemCode = {
+    id?: number;
+    itemId?: number;
+    codeType?: CodeType;
+    contents: string;
+    item?: null | Item;
+};
+
+export type ItemCodeDto = {
+    id: number;
+    codeType: CodeType;
+    contents: string;
 };
 
 export type ItemListEntry = {
@@ -81,6 +153,9 @@ export type ItemListEntry = {
     level?: null | QuantityLevel;
     broken?: boolean;
     borrowed?: boolean;
+    addedAt?: string;
+    expiresAt?: null | string;
+    tags?: Array<string>;
 };
 
 export type ItemResponse = {
@@ -93,7 +168,19 @@ export type ItemResponse = {
     storage: StorageListEntry;
     category: CategoryDto;
     note?: null | string;
+    broken?: boolean;
+    addedAt?: string;
+    expiresAt?: null | string;
     borrowings?: Array<BorrowingDto>;
+    tags?: Array<string>;
+    codes?: Array<ItemCodeDto>;
+};
+
+export type ItemTag = {
+    itemId?: number;
+    tagId?: number;
+    item?: null | Item;
+    tag?: null | Tag;
 };
 
 export type NotFoundResponse = {
@@ -109,6 +196,11 @@ export type RenameCategory = {
     id: number;
 };
 
+export type RenameStorageType = {
+    name: string;
+    id: number;
+};
+
 export type ReserveItem = {
     borrowerName: string;
     expectedStart: string;
@@ -116,6 +208,31 @@ export type ReserveItem = {
     incomplete: boolean;
     comment: null | string;
     id: number;
+};
+
+export type SetCategoryParent = {
+    parentId: null | number;
+    id: number;
+};
+
+export type SetItemTags = {
+    tagIds: Array<number>;
+    id: number;
+};
+
+export type SetStorageParent = {
+    parentId: null | number;
+    id: number;
+};
+
+export type Storage = {
+    id?: number;
+    parentId?: null | number;
+    typeId?: number;
+    name: string;
+    slug?: null | string;
+    type?: null | StorageType;
+    parent?: null | Storage;
 };
 
 export type StorageItemsResponse = {
@@ -138,6 +255,7 @@ export type StorageListEntry = {
 export type StorageTreeResponse = {
     id?: number;
     parentId?: null | number;
+    storageTypeId?: number;
     name: string;
     children?: Array<StorageTreeResponse>;
 };
@@ -145,6 +263,38 @@ export type StorageTreeResponse = {
 export type StorageType = {
     id?: number;
     name: string;
+};
+
+export type Tag = {
+    id?: number;
+    name: string;
+    itemTags?: null | Array<ItemTag>;
+};
+
+export type UpdateItem = {
+    name: string;
+    slug: null | string;
+    note: null | string;
+    categoryId: number;
+    storageId: number;
+    quantityType: QuantityType;
+    quantity: null | number;
+    broken: boolean;
+    expiresAt?: null | string;
+    id: number;
+};
+
+export type UpdateItemCode = {
+    codeType: CodeType;
+    contents: string;
+    id: number;
+    codeId: number;
+};
+
+export type UpdateStorage = {
+    name: string;
+    storageTypeId: number;
+    id: number;
 };
 
 export type UserInfoDto = {
@@ -364,13 +514,12 @@ export type GetCategoryItemsResponses = {
 export type GetCategoryItemsResponse = GetCategoryItemsResponses[keyof GetCategoryItemsResponses];
 
 export type SetCategoryParentData = {
-    body?: never;
+    body: SetCategoryParent;
     path: {
         id: number;
-        parentId: number;
     };
     query?: never;
-    url: '/api/categories/{id}/setParent/{parentId}';
+    url: '/api/categories/{id}/setParent';
 };
 
 export type SetCategoryParentErrors = {
@@ -450,6 +599,151 @@ export type CreateStorageTypeResponses = {
 };
 
 export type CreateStorageTypeResponse = CreateStorageTypeResponses[keyof CreateStorageTypeResponses];
+
+export type DeleteStorageTypeData = {
+    body?: never;
+    path: {
+        id: number;
+    };
+    query?: never;
+    url: '/api/storageTypes/{id}';
+};
+
+export type DeleteStorageTypeErrors = {
+    /**
+     * Bad Request
+     */
+    400: ErrorResponse;
+    /**
+     * Not Found
+     */
+    404: NotFoundResponse;
+};
+
+export type DeleteStorageTypeError = DeleteStorageTypeErrors[keyof DeleteStorageTypeErrors];
+
+export type DeleteStorageTypeResponses = {
+    /**
+     * OK
+     */
+    200: unknown;
+};
+
+export type RenameStorageTypeData = {
+    body: RenameStorageType;
+    path: {
+        id: number;
+    };
+    query?: never;
+    url: '/api/storageTypes/{id}';
+};
+
+export type RenameStorageTypeErrors = {
+    /**
+     * Bad Request
+     */
+    400: ErrorResponse;
+    /**
+     * Not Found
+     */
+    404: NotFoundResponse;
+};
+
+export type RenameStorageTypeError = RenameStorageTypeErrors[keyof RenameStorageTypeErrors];
+
+export type RenameStorageTypeResponses = {
+    /**
+     * OK
+     */
+    200: unknown;
+};
+
+export type GetTagsData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/api/tags';
+};
+
+export type GetTagsErrors = {
+    /**
+     * Bad Request
+     */
+    400: ErrorResponse;
+    /**
+     * Not Found
+     */
+    404: NotFoundResponse;
+};
+
+export type GetTagsError = GetTagsErrors[keyof GetTagsErrors];
+
+export type GetTagsResponses = {
+    /**
+     * OK
+     */
+    200: Array<Tag>;
+};
+
+export type GetTagsResponse = GetTagsResponses[keyof GetTagsResponses];
+
+export type CreateTagData = {
+    body?: CreateTag;
+    path?: never;
+    query?: never;
+    url: '/api/tags';
+};
+
+export type CreateTagErrors = {
+    /**
+     * Bad Request
+     */
+    400: ErrorResponse;
+    /**
+     * Not Found
+     */
+    404: NotFoundResponse;
+};
+
+export type CreateTagError = CreateTagErrors[keyof CreateTagErrors];
+
+export type CreateTagResponses = {
+    /**
+     * OK
+     */
+    200: number;
+};
+
+export type CreateTagResponse = CreateTagResponses[keyof CreateTagResponses];
+
+export type DeleteTagData = {
+    body?: never;
+    path: {
+        id: number;
+    };
+    query?: never;
+    url: '/api/tags/{id}';
+};
+
+export type DeleteTagErrors = {
+    /**
+     * Bad Request
+     */
+    400: ErrorResponse;
+    /**
+     * Not Found
+     */
+    404: NotFoundResponse;
+};
+
+export type DeleteTagError = DeleteTagErrors[keyof DeleteTagErrors];
+
+export type DeleteTagResponses = {
+    /**
+     * OK
+     */
+    200: unknown;
+};
 
 export type GetStoragesData = {
     body?: never;
@@ -538,6 +832,35 @@ export type GetRootStorageResponses = {
 
 export type GetRootStorageResponse = GetRootStorageResponses[keyof GetRootStorageResponses];
 
+export type DeleteStorageData = {
+    body?: never;
+    path: {
+        id: number;
+    };
+    query?: never;
+    url: '/api/storages/{id}';
+};
+
+export type DeleteStorageErrors = {
+    /**
+     * Bad Request
+     */
+    400: ErrorResponse;
+    /**
+     * Not Found
+     */
+    404: NotFoundResponse;
+};
+
+export type DeleteStorageError = DeleteStorageErrors[keyof DeleteStorageErrors];
+
+export type DeleteStorageResponses = {
+    /**
+     * OK
+     */
+    200: unknown;
+};
+
 export type GetStorageData = {
     body?: never;
     path: {
@@ -568,6 +891,35 @@ export type GetStorageResponses = {
 };
 
 export type GetStorageResponse = GetStorageResponses[keyof GetStorageResponses];
+
+export type UpdateStorageData = {
+    body: UpdateStorage;
+    path: {
+        id: number;
+    };
+    query?: never;
+    url: '/api/storages/{id}';
+};
+
+export type UpdateStorageErrors = {
+    /**
+     * Bad Request
+     */
+    400: ErrorResponse;
+    /**
+     * Not Found
+     */
+    404: NotFoundResponse;
+};
+
+export type UpdateStorageError = UpdateStorageErrors[keyof UpdateStorageErrors];
+
+export type UpdateStorageResponses = {
+    /**
+     * OK
+     */
+    200: unknown;
+};
 
 export type GetStorageBySlugData = {
     body?: never;
@@ -600,10 +952,41 @@ export type GetStorageBySlugResponses = {
 
 export type GetStorageBySlugResponse = GetStorageBySlugResponses[keyof GetStorageBySlugResponses];
 
+export type SetStorageParentData = {
+    body: SetStorageParent;
+    path: {
+        id: number;
+    };
+    query?: never;
+    url: '/api/storages/{id}/setParent';
+};
+
+export type SetStorageParentErrors = {
+    /**
+     * Bad Request
+     */
+    400: ErrorResponse;
+    /**
+     * Not Found
+     */
+    404: NotFoundResponse;
+};
+
+export type SetStorageParentError = SetStorageParentErrors[keyof SetStorageParentErrors];
+
+export type SetStorageParentResponses = {
+    /**
+     * OK
+     */
+    200: unknown;
+};
+
 export type GetAllItemsData = {
     body?: never;
     path?: never;
-    query?: never;
+    query?: {
+        Search?: string;
+    };
     url: '/api/items';
 };
 
@@ -688,6 +1071,216 @@ export type GetItemResponses = {
 };
 
 export type GetItemResponse = GetItemResponses[keyof GetItemResponses];
+
+export type UpdateItemData = {
+    body: UpdateItem;
+    path: {
+        id: number;
+    };
+    query?: never;
+    url: '/api/items/{id}';
+};
+
+export type UpdateItemErrors = {
+    /**
+     * Bad Request
+     */
+    400: ErrorResponse;
+    /**
+     * Not Found
+     */
+    404: NotFoundResponse;
+};
+
+export type UpdateItemError = UpdateItemErrors[keyof UpdateItemErrors];
+
+export type UpdateItemResponses = {
+    /**
+     * OK
+     */
+    200: unknown;
+};
+
+export type SetItemTagsData = {
+    body: SetItemTags;
+    path: {
+        id: number;
+    };
+    query?: never;
+    url: '/api/items/{id}/tags';
+};
+
+export type SetItemTagsErrors = {
+    /**
+     * Bad Request
+     */
+    400: ErrorResponse;
+    /**
+     * Not Found
+     */
+    404: NotFoundResponse;
+};
+
+export type SetItemTagsError = SetItemTagsErrors[keyof SetItemTagsErrors];
+
+export type SetItemTagsResponses = {
+    /**
+     * OK
+     */
+    200: unknown;
+};
+
+export type LookupItemByCodeData = {
+    body?: never;
+    path?: never;
+    query: {
+        Contents: string;
+        CodeType?: CodeType;
+    };
+    url: '/api/items/byCode';
+};
+
+export type LookupItemByCodeErrors = {
+    /**
+     * Bad Request
+     */
+    400: ErrorResponse;
+    /**
+     * Not Found
+     */
+    404: NotFoundResponse;
+};
+
+export type LookupItemByCodeError = LookupItemByCodeErrors[keyof LookupItemByCodeErrors];
+
+export type LookupItemByCodeResponses = {
+    /**
+     * OK
+     */
+    200: number;
+};
+
+export type LookupItemByCodeResponse = LookupItemByCodeResponses[keyof LookupItemByCodeResponses];
+
+export type GetExpiringItemsData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/api/items/expiring';
+};
+
+export type GetExpiringItemsErrors = {
+    /**
+     * Bad Request
+     */
+    400: ErrorResponse;
+    /**
+     * Not Found
+     */
+    404: NotFoundResponse;
+};
+
+export type GetExpiringItemsError = GetExpiringItemsErrors[keyof GetExpiringItemsErrors];
+
+export type GetExpiringItemsResponses = {
+    /**
+     * OK
+     */
+    200: Array<ItemListEntry>;
+};
+
+export type GetExpiringItemsResponse = GetExpiringItemsResponses[keyof GetExpiringItemsResponses];
+
+export type AddItemCodeData = {
+    body: AddItemCode;
+    path: {
+        id: number;
+    };
+    query?: never;
+    url: '/api/items/{id}/codes';
+};
+
+export type AddItemCodeErrors = {
+    /**
+     * Bad Request
+     */
+    400: ErrorResponse;
+    /**
+     * Not Found
+     */
+    404: NotFoundResponse;
+};
+
+export type AddItemCodeError = AddItemCodeErrors[keyof AddItemCodeErrors];
+
+export type AddItemCodeResponses = {
+    /**
+     * OK
+     */
+    200: number;
+};
+
+export type AddItemCodeResponse = AddItemCodeResponses[keyof AddItemCodeResponses];
+
+export type DeleteItemCodeData = {
+    body?: never;
+    path: {
+        id: number;
+        codeId: number;
+    };
+    query?: never;
+    url: '/api/items/{id}/codes/{codeId}';
+};
+
+export type DeleteItemCodeErrors = {
+    /**
+     * Bad Request
+     */
+    400: ErrorResponse;
+    /**
+     * Not Found
+     */
+    404: NotFoundResponse;
+};
+
+export type DeleteItemCodeError = DeleteItemCodeErrors[keyof DeleteItemCodeErrors];
+
+export type DeleteItemCodeResponses = {
+    /**
+     * OK
+     */
+    200: unknown;
+};
+
+export type UpdateItemCodeData = {
+    body: UpdateItemCode;
+    path: {
+        id: number;
+        codeId: number;
+    };
+    query?: never;
+    url: '/api/items/{id}/codes/{codeId}';
+};
+
+export type UpdateItemCodeErrors = {
+    /**
+     * Bad Request
+     */
+    400: ErrorResponse;
+    /**
+     * Not Found
+     */
+    404: NotFoundResponse;
+};
+
+export type UpdateItemCodeError = UpdateItemCodeErrors[keyof UpdateItemCodeErrors];
+
+export type UpdateItemCodeResponses = {
+    /**
+     * OK
+     */
+    200: unknown;
+};
 
 export type ReserveItemData = {
     body: ReserveItem;

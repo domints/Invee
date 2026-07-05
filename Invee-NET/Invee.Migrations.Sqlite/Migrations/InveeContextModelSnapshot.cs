@@ -15,7 +15,7 @@ namespace Invee.Migrations.Sqlite.Migrations
         protected override void BuildModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
-            modelBuilder.HasAnnotation("ProductVersion", "9.0.1");
+            modelBuilder.HasAnnotation("ProductVersion", "10.0.5");
 
             modelBuilder.Entity("Invee.Data.Database.Model.Borrowing", b =>
                 {
@@ -92,11 +92,17 @@ namespace Invee.Migrations.Sqlite.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("INTEGER");
 
+                    b.Property<DateTime>("AddedAt")
+                        .HasColumnType("TEXT");
+
                     b.Property<bool>("Broken")
                         .HasColumnType("INTEGER");
 
                     b.Property<int>("CategoryId")
                         .HasColumnType("INTEGER");
+
+                    b.Property<DateTime?>("ExpiresAt")
+                        .HasColumnType("TEXT");
 
                     b.Property<string>("Name")
                         .IsRequired()
@@ -124,6 +130,44 @@ namespace Invee.Migrations.Sqlite.Migrations
                     b.HasIndex("StorageId");
 
                     b.ToTable("Items");
+                });
+
+            modelBuilder.Entity("Invee.Data.Database.Model.ItemCode", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("CodeType")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Contents")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("ItemId")
+                        .HasColumnType("INTEGER");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ItemId");
+
+                    b.ToTable("ItemCodes");
+                });
+
+            modelBuilder.Entity("Invee.Data.Database.Model.ItemTag", b =>
+                {
+                    b.Property<int>("ItemId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("TagId")
+                        .HasColumnType("INTEGER");
+
+                    b.HasKey("ItemId", "TagId");
+
+                    b.HasIndex("TagId");
+
+                    b.ToTable("ItemTags");
                 });
 
             modelBuilder.Entity("Invee.Data.Database.Model.Storage", b =>
@@ -169,6 +213,21 @@ namespace Invee.Migrations.Sqlite.Migrations
                     b.ToTable("StorageTypes");
                 });
 
+            modelBuilder.Entity("Invee.Data.Database.Model.Tag", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Tags");
+                });
+
             modelBuilder.Entity("Invee.Data.Database.Model.Borrowing", b =>
                 {
                     b.HasOne("Invee.Data.Database.Model.Item", "Item")
@@ -208,6 +267,36 @@ namespace Invee.Migrations.Sqlite.Migrations
                     b.Navigation("Storage");
                 });
 
+            modelBuilder.Entity("Invee.Data.Database.Model.ItemCode", b =>
+                {
+                    b.HasOne("Invee.Data.Database.Model.Item", "Item")
+                        .WithMany("ItemCodes")
+                        .HasForeignKey("ItemId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Item");
+                });
+
+            modelBuilder.Entity("Invee.Data.Database.Model.ItemTag", b =>
+                {
+                    b.HasOne("Invee.Data.Database.Model.Item", "Item")
+                        .WithMany("ItemTags")
+                        .HasForeignKey("ItemId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Invee.Data.Database.Model.Tag", "Tag")
+                        .WithMany("ItemTags")
+                        .HasForeignKey("TagId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Item");
+
+                    b.Navigation("Tag");
+                });
+
             modelBuilder.Entity("Invee.Data.Database.Model.Storage", b =>
                 {
                     b.HasOne("Invee.Data.Database.Model.Storage", "Parent")
@@ -235,6 +324,15 @@ namespace Invee.Migrations.Sqlite.Migrations
             modelBuilder.Entity("Invee.Data.Database.Model.Item", b =>
                 {
                     b.Navigation("Borrowings");
+
+                    b.Navigation("ItemCodes");
+
+                    b.Navigation("ItemTags");
+                });
+
+            modelBuilder.Entity("Invee.Data.Database.Model.Tag", b =>
+                {
+                    b.Navigation("ItemTags");
                 });
 #pragma warning restore 612, 618
         }

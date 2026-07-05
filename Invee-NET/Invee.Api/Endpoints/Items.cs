@@ -16,7 +16,15 @@ namespace Invee.Api.Endpoints
             group.WithTags("Items");
             group.MapBodyPostCommand<CreateItem, int>("/");
             group.MapQuery<GetAllItems, List<ItemListEntry>>("/");
-            group.MapQuery<GetItem, ItemResponse>("/{id:int}");
+            group.MapQuery<GetItem, ItemResponse>("/{id:int}").AllowAnonymous();
+            group.MapBodyAndParamPutCommand<IdParameter, UpdateItem>("/{id:int}");
+            group.MapBodyAndParamPutCommand<IdParameter, SetItemTags>("/{id:int}/tags");
+
+            group.MapQuery<LookupItemByCode, int>("/byCode");
+            group.MapQuery<GetExpiringItems, List<ItemListEntry>>("/expiring");
+            group.MapBodyAndParamPostCommand<IdParameter, AddItemCode, int>("/{id:int}/codes");
+            group.MapBodyAndParamPutCommand<ItemCodeIdParameter, UpdateItemCode>("/{id:int}/codes/{codeId:int}");
+            group.MapParamDeleteCommand<DeleteItemCode>("/{id:int}/codes/{codeId:int}");
 
             group.MapBodyAndParamPostCommand<IdParameter, ReserveItem>("/{id:int}/reserve");
             group.MapBodyAndParamPostCommand<IdParameter, BorrowItem>("/{id:int}/borrow");

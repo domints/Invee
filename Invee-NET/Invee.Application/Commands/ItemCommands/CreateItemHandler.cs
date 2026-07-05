@@ -1,11 +1,9 @@
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 using Invee.Application.Consts;
 using Invee.Application.Models;
 using Invee.Data.Database;
 using Invee.Data.Database.Model;
+using Invee.Data.Enums;
 using MediatR;
 
 namespace Invee.Application.Commands.ItemCommands
@@ -29,7 +27,7 @@ namespace Invee.Application.Commands.ItemCommands
             
             if (request.Slug != null)
             {
-                var slugDuplicate = _db.Storages.Any(i => i.Slug == request.Slug);
+                var slugDuplicate = _db.Items.Any(i => i.Slug == request.Slug);
                 if (slugDuplicate)
                     return OperationResult<int>.Fail(Errors.SlugDuplicate(nameof(Item)));
             }
@@ -47,7 +45,10 @@ namespace Invee.Application.Commands.ItemCommands
                 Name = request.Name,
                 Slug = request.Slug,
                 CategoryId = request.CategoryId,
-                StorageId = request.StorageId
+                StorageId = request.StorageId,
+                QuantityType = request.QuantityType,
+                AddedAt = DateTime.UtcNow,
+                ExpiresAt = request.ExpiresAt
             };
 
             _db.Items.Add(entity);

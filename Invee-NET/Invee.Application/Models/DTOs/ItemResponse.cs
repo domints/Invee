@@ -17,6 +17,11 @@ namespace Invee.Application.Models.DTOs
         public required StorageListEntry Storage { get; set; }
         public required CategoryDTO Category { get; set; }
         public string? Note { get; set; }
+        public bool Broken { get; set; }
+        public DateTime AddedAt { get; set; }
+        public DateTime? ExpiresAt { get; set; }
         public List<BorrowingDTO> Borrowings { get; set; } = new List<BorrowingDTO>();
+        public List<string> Tags { get; set; } = new List<string>();
+        public List<ItemCodeDto> Codes { get; set; } = new List<ItemCodeDto>();
     }
 }

@@ -9,6 +9,7 @@ namespace Invee.Application.Models.DTOs
     {
         public int Id { get; set; }
         public int? ParentId { get; set; }
+        public int StorageTypeId { get; set; }
         public required string Name { get; set; }
         public List<StorageTreeResponse> Children { get; set; } = new List<StorageTreeResponse>();
     }

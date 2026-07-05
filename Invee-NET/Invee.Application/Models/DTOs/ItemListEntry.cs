@@ -16,5 +16,8 @@ namespace Invee.Application.Models.DTOs
         public QuantityLevel? Level { get; set; }
         public bool Broken { get; set; }
         public bool Borrowed { get; set; }
+        public DateTime AddedAt { get; set; }
+        public DateTime? ExpiresAt { get; set; }
+        public List<string> Tags { get; set; } = new List<string>();
     }
 }

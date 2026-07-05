@@ -22,7 +22,9 @@ namespace Invee.Application.Models.Converters
             QuantityType = i.QuantityType,
             Quantity = i.QuantityType == Data.Enums.QuantityType.Precise ? i.Quantity : null,
             Level = i.QuantityType == Data.Enums.QuantityType.Levels ? (Data.Enums.QuantityLevel)i.Quantity! : null,
-            Broken = i.Broken
+            Broken = i.Broken,
+            AddedAt = i.AddedAt,
+            ExpiresAt = i.ExpiresAt
         };
 
         public static IEnumerable<ItemListEntry> MarkBorrowed(this IEnumerable<ItemListEntry> items, HashSet<int> borrowedIds)

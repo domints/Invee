@@ -1,12 +1,16 @@
 <script setup lang="ts">
-import { ElCard } from 'element-plus';
+import { ElButton, ElCard } from 'element-plus';
 import CardHeader from '@/components/CardHeader.vue';
 import { getCategoryItems, getCategoryTree, type ItemListEntry, type CategoryTreeResponse } from '@/client';
 import { ref, useTemplateRef } from 'vue';
 import { onBeforeRouteUpdate, useRoute } from 'vue-router';
 import { slugId, slugParentId } from '@/utils';
 import NewCategoryDialog from '@/components/NewCategoryDialog.vue';
+import NewItemDialog from '@/components/NewItemDialog.vue';
+import ItemList from '@/components/ItemList.vue';
 import { useUserStore } from '@/stores/user';
+import SvgIcon from '@jamescoyle/vue-icon';
+import { mdiFolderOutline, mdiChevronLeft, mdiChevronRight } from '@mdi/js';
 
 type CategoryItem = {
     id: number;
@@ -24,9 +28,10 @@ var childrenDict: { [id: number]: CategoryItem[] } = {};
 var slugDict: { [slug: string]: CategoryItem } = {};
 const currentCategory = ref<CategoryItem>();
 const currentChildren = ref<CategoryItem[]>();
-const currentItems = ref<ItemListEntry[]>();
+const currentItems = ref<ItemListEntry[]>([]);
 
 const newCategoryDialog = useTemplateRef("newCategoryDialog");
+const newItemDialog = useTemplateRef("newItemDialog");
 
 const fillDict = (cats: CategoryTreeResponse[]) => {
     for (let c of cats) {
@@ -77,7 +82,7 @@ const updateCurrentCat = async (id: string | number) => {
 
     currentChildren.value = childrenDict[currentCategory.value.id!];
 
-    currentItems.value = (await getCategoryItems({ path: { id: currentCategory.value.id! } })).data;
+    currentItems.value = (await getCategoryItems({ path: { id: currentCategory.value.id! } })).data ?? [];
 };
 
 await refreshCategories();
@@ -103,27 +108,52 @@ const onCategoryCreated = async (newCategoryId: number) => {
                 <CardHeader v-if="userStore?.loggedIn" :title="currentCategory?.name!" button-text="Add child +" @btn-clicked="newCategoryDialog?.openCreateCategoryDialog(Number(route.params.id))" @categoryCreated="onCategoryCreated">
                 </CardHeader>
             </template>
-            <ul>
-                <li v-if="currentCategory?.parentId">
-                    <router-link :to="{ name: 'category', params: slugParentId(currentCategory) }">Back</router-link>
-                </li>
-                <li v-else>
-                    <router-link :to="{ name: 'home' }">Back</router-link>
-                </li>
-                <li v-for="child in currentChildren">
-                    <router-link :to="{ name: 'category', params: slugId(child) }">{{ child.name }}</router-link>
-                </li>
-            </ul>
+            <nav class="catNav">
+                <router-link
+                    v-if="currentCategory?.parentId"
+                    :to="{ name: 'category', params: slugParentId(currentCategory) }"
+                    class="catNav__item catNav__item--back"
+                >
+                    <SvgIcon type="mdi" size="1.1rem" :path="mdiChevronLeft" class="catNav__icon" />
+                    <span>Back</span>
+                </router-link>
+                <router-link
+                    v-else
+                    :to="{ name: 'home' }"
+                    class="catNav__item catNav__item--back"
+                >
+                    <SvgIcon type="mdi" size="1.1rem" :path="mdiChevronLeft" class="catNav__icon" />
+                    <span>Home</span>
+                </router-link>
+
+                <div v-if="currentChildren?.length" class="catNav__divider"></div>
+
+                <router-link
+                    v-for="child in currentChildren"
+                    :key="child.id"
+                    :to="{ name: 'category', params: slugId(child) }"
+                    class="catNav__item"
+                >
+                    <SvgIcon type="mdi" size="1.1rem" :path="mdiFolderOutline" class="catNav__icon" />
+                    <span class="catNav__label">{{ child.name }}</span>
+                    <SvgIcon type="mdi" size="1rem" :path="mdiChevronRight" class="catNav__arrow" />
+                </router-link>
+            </nav>
         </el-card>
         <div class="itemsContainer">
-            <ul>
-                <li v-for="item in currentItems">{{ item.name }}</li>
-            </ul>
-            XD
+            <div class="items-header">
+                <h2>{{ currentCategory?.name }}</h2>
+                <el-button v-if="userStore?.loggedIn" type="primary" plain @click="newItemDialog?.open('category', currentCategory!.id)">
+                    Add item +
+                </el-button>
+            </div>
+            <ItemList v-if="currentItems.length" :items="currentItems" />
+            <p v-else class="empty-state">No items in this category</p>
         </div>
     </div>
 
     <NewCategoryDialog ref="newCategoryDialog"></NewCategoryDialog>
+    <NewItemDialog ref="newItemDialog"></NewItemDialog>
 </template>
 
 <style lang="scss" scoped>
@@ -137,13 +167,85 @@ const onCategoryCreated = async (newCategoryId: number) => {
 }
 
 .itemsContainer {
-    background-color: bisque;
     flex-grow: 1;
 }
 
-ul {
-    list-style-type: none;
-    margin: 0;
-    padding: 0;
+.items-header {
+    display: flex;
+    align-items: center;
+    margin-bottom: 1.5em;
+
+    h2 {
+        flex-grow: 1;
+        text-align: center;
+        margin: 0;
+    }
+}
+
+.empty-state {
+    color: var(--el-text-color-secondary);
+    text-align: center;
+}
+
+/* ── Sidebar nav ── */
+.catNav {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    margin: -4px;
+
+    &__divider {
+        height: 1px;
+        background: var(--el-border-color-lighter);
+        margin: 4px 0;
+    }
+
+    &__item {
+        display: flex;
+        align-items: center;
+        gap: 0.45rem;
+        padding: 0.5rem 0.6rem;
+        border-radius: var(--el-border-radius-base);
+        text-decoration: none;
+        color: var(--el-text-color-primary);
+        font-size: 0.875rem;
+        transition: background 0.15s, border-left-color 0.15s;
+        border-left: 2px solid transparent;
+
+        &:hover {
+            background: var(--el-fill-color-light);
+            border-left-color: var(--el-color-primary-light-5);
+        }
+
+        &--back {
+            color: var(--el-text-color-secondary);
+            font-size: 0.82rem;
+
+            &:hover {
+                color: var(--el-text-color-primary);
+            }
+        }
+    }
+
+    &__icon {
+        flex-shrink: 0;
+        color: var(--el-color-primary);
+
+        .catNav__item--back & {
+            color: var(--el-text-color-secondary);
+        }
+    }
+
+    &__label {
+        flex: 1;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    &__arrow {
+        flex-shrink: 0;
+        color: var(--el-text-color-placeholder);
+    }
 }
 </style>

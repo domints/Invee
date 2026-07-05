@@ -8,5 +8,5 @@ using MediatR;
 
 namespace Invee.Application.Queries.ItemQueries
 {
-    public record GetAllItems() : IRequest<OperationResult<List<ItemListEntry>>>;
+    public record GetAllItems(string? Search = null) : IRequest<OperationResult<List<ItemListEntry>>>;
 }

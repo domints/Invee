@@ -24,6 +24,7 @@
   <ItemGroup>
     <ProjectReference Include="../Invee.Data/Invee.Data.csproj" />
     <ProjectReference Include="../Invee.Migrations.Sqlite/Invee.Migrations.Sqlite.csproj" />
+    <ProjectReference Include="../Invee.Migrations.Postgres/Invee.Migrations.Postgres.csproj" />
     <ProjectReference Include="..\Invee.Application\Invee.Application.csproj" />
     <!--<ProjectReference Include="..\..\..\aspnetcore\src\OpenApi\src\Microsoft.AspNetCore.OpenApi.csproj" />-->
   </ItemGroup>

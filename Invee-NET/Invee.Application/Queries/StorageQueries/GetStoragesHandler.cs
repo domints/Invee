@@ -26,7 +26,8 @@ namespace Invee.Application.Queries.StorageQueries
             var roots = result.Where(c => c.ParentId == null).Select(c => new StorageTreeResponse 
             {
                 Id = c.Id,
-                Name = c.Name
+                Name = c.Name,
+                StorageTypeId = c.TypeId
             }).ToList();
             var children = result.Where(c => c.ParentId != null).GroupBy(c => c.ParentId ?? -1).ToDictionary(g => g.Key, v => v.ToList());
             foreach (var root in roots)
@@ -42,7 +43,8 @@ namespace Invee.Application.Queries.StorageQueries
                 {
                     Id = c.Id,
                     Name = c.Name,
-                    ParentId = category.Id
+                    ParentId = category.Id,
+                    StorageTypeId = c.TypeId
                 }).ToList();
 
                 foreach (var c in category.Children)

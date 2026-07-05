@@ -17,10 +17,14 @@ namespace Invee.Data.Database.Model
         public string? Note { get; set; }
         public string? Slug { get; set; }
         public bool Broken { get; set; }
+        public DateTime AddedAt { get; set; }
+        public DateTime? ExpiresAt { get; set; }
 
         public virtual Category? Category { get; set; }
         public virtual Storage? Storage { get; set; }
 
         public virtual ICollection<Borrowing>? Borrowings { get; set; }
+        public virtual ICollection<ItemTag>? ItemTags { get; set; }
+        public virtual ICollection<ItemCode>? ItemCodes { get; set; }
     }
 }

@@ -21,7 +21,7 @@ namespace Invee.Api.Endpoints
             group.MapBodyPostCommand<CreateCategory, int>("/");
             group.MapParamDeleteCommand<DeleteCategory>("/{id:int}");
             group.MapBodyAndParamPutCommand<IdParameter, RenameCategory>("/{id:int}");
-            group.MapParamPostCommand<SetCategoryParent>("/{id:int}/setParent/{parentId:int?}");
+            group.MapBodyAndParamPostCommand<IdParameter, SetCategoryParent>("/{id:int}/setParent");
             return group;
         }
     }

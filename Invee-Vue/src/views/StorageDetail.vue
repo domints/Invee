@@ -1,11 +1,18 @@
 <script setup lang="ts">
 import { getStorage, getStorageBySlug, type GetStorageResponse } from '@/client';
 import StorageList from '@/components/StorageList.vue';
-import { ref } from 'vue'
+import ItemList from '@/components/ItemList.vue';
+import NewItemDialog from '@/components/NewItemDialog.vue';
+import { ElButton } from 'element-plus';
+import { ref, useTemplateRef } from 'vue'
 import { onBeforeRouteUpdate, useRoute } from 'vue-router'
 import SvgIcon from '@jamescoyle/vue-icon';
 import { mdiArrowUpLeftBold } from '@mdi/js';
 import { slugParentId } from '@/utils';
+import { useUserStore } from '@/stores/user';
+
+const userStore = useUserStore();
+const newItemDialog = useTemplateRef('newItemDialog');
 
 const storageId = ref(0);
 const storage = ref<GetStorageResponse>();
@@ -26,9 +33,7 @@ const reloadStorage = async (id: string) => {
 const route = useRoute();
 storage.value = await reloadStorage(<string>route.params.id);
 
-
 onBeforeRouteUpdate(async (to, from) => {
-    // only fetch the user if the id changed as maybe only the query or the hash changed
     if (to.params.id !== from.params.id) {
         storage.value = await reloadStorage(<string>to.params.id);
     }
@@ -48,14 +53,25 @@ onBeforeRouteUpdate(async (to, from) => {
         <div class="storage-header__name">
             <h2>{{ storage?.name }}</h2>
         </div>
+        <div v-if="userStore.loggedIn" class="storage-header__actions">
+            <el-button type="primary" plain @click="newItemDialog?.open('storage', storageId)">Add item +</el-button>
+        </div>
     </div>
 
-    <StorageList v-if="storage?.childStorages" :storage-items=storage?.childStorages></StorageList>
+    <StorageList v-if="storage?.childStorages?.length" :storage-items="storage.childStorages"></StorageList>
+
+    <div class="items-section">
+        <ItemList v-if="storage?.items?.length" :items="storage.items" />
+        <p v-else-if="!storage?.childStorages?.length" class="empty-state">No items or sub-storages here</p>
+    </div>
+
+    <NewItemDialog ref="newItemDialog"></NewItemDialog>
 </template>
 
 <style lang="scss" scoped>
 .storage-header {
     display: flex;
+    align-items: center;
     margin-bottom: 1.5em;
 
     &__name {
@@ -74,5 +90,19 @@ onBeforeRouteUpdate(async (to, from) => {
             margin-right: 0.5rem;
         }
     }
+
+    &__actions {
+        display: flex;
+        align-items: center;
+    }
+}
+
+.items-section {
+    margin-top: 1rem;
+}
+
+.empty-state {
+    color: var(--el-text-color-secondary);
+    text-align: center;
 }
 </style>

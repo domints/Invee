@@ -1,7 +1,4 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
+using System.Diagnostics.CodeAnalysis;
 using Invee.Data.Database.Model;
 using Microsoft.EntityFrameworkCore;
 
@@ -9,6 +6,7 @@ namespace Invee.Data.Database
 {
     public class InveeContext : DbContext
     {
+        [SetsRequiredMembers]
         public InveeContext (DbContextOptions<InveeContext> options)
             : base(options)
         {
@@ -19,5 +17,8 @@ namespace Invee.Data.Database
         public required DbSet<Item> Items { get; set; }
         public required DbSet<Storage> Storages { get; set; }
         public required DbSet<StorageType> StorageTypes { get; set; }
+        public required DbSet<Tag> Tags { get; set; }
+        public required DbSet<ItemTag> ItemTags { get; set; }
+        public required DbSet<ItemCode> ItemCodes { get; set; }
     }
 }

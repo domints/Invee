@@ -6,6 +6,7 @@ using Invee.Application.Consts;
 using Invee.Application.Models;
 using Invee.Data.Database;
 using Invee.Data.Database.Model;
+using Invee.Data.Enums;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 
@@ -37,7 +38,8 @@ namespace Invee.Application.Commands.ItemCommands
                 ItemId = request.Id,
                 Created = DateTime.UtcNow,
                 Incomplete = request.Incomplete,
-                Comment = request.Comment
+                Comment = request.Comment,
+                Status = BorrowingStatus.Borrowed
             };
 
             _db.Borrowings.Add(borrowing);

@@ -4,6 +4,9 @@ import StorageDetail from '@/views/StorageDetail.vue'
 import AdminView from '@/views/AdminView.vue'
 import CategoryDetail from '@/views/CategoryDetail.vue'
 import LoginView from '@/views/LoginView.vue'
+import ItemEdit from '@/views/ItemEdit.vue'
+import ItemDetail from '@/views/ItemDetail.vue'
+import { useUserStore } from '@/stores/user'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -40,8 +43,26 @@ const router = createRouter({
       path: '/login',
       name: 'login',
       component: LoginView
+    },
+    {
+      path: '/item/:id',
+      name: 'item',
+      component: ItemDetail,
+    },
+    {
+      path: '/item/:id/edit',
+      name: 'item-edit',
+      component: ItemEdit,
+      meta: { requiresAuth: true }
     }
   ],
+})
+
+router.beforeEach((to) => {
+  const userStore = useUserStore()
+  if (to.meta.requiresAuth && !userStore.loggedIn) {
+    return { name: 'login' }
+  }
 })
 
 export default router
