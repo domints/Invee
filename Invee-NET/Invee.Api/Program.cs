@@ -1,4 +1,5 @@
 using System.IdentityModel.Tokens.Jwt;
+using System.Text.Json.Serialization;
 using Invee.Api.Endpoints;
 using Invee.Data.Database;
 using Microsoft.AspNetCore.Authentication;
@@ -77,6 +78,12 @@ builder.Services.AddAuthorizationBuilder()
     .SetFallbackPolicy(requireAuthPolicy);
 
 builder.Services.AddMediatR(cfg => cfg.RegisterServicesFromAssemblyContaining<Invee.Application.Marker>());
+
+builder.Services.ConfigureHttpJsonOptions(options =>
+{
+	// Tell OpenApi generator to report number fields as integers/floats only, not strings
+	options.SerializerOptions.NumberHandling = JsonNumberHandling.Strict;
+});
 
 var dbType = builder.Configuration.GetValue<string>("Database:Type");
 // https://learn.microsoft.com/en-us/ef/core/managing-schemas/migrations/providers?tabs=dotnet-core-cli#using-one-context-type

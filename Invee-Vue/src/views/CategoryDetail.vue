@@ -2,9 +2,11 @@
 import { ElCard } from 'element-plus';
 import CardHeader from '@/components/CardHeader.vue';
 import { getCategoryItems, getCategoryTree, type ItemListEntry, type CategoryTreeResponse } from '@/client';
-import { ref } from 'vue';
+import { ref, useTemplateRef } from 'vue';
 import { onBeforeRouteUpdate, useRoute } from 'vue-router';
 import { slugId, slugParentId } from '@/utils';
+import NewCategoryDialog from '@/components/NewCategoryDialog.vue';
+import { useUserStore } from '@/stores/user';
 
 type CategoryItem = {
     id: number;
@@ -14,6 +16,8 @@ type CategoryItem = {
     parentSlug?: string | null;
 }
 
+const userStore = useUserStore();
+
 var categoryTree: CategoryTreeResponse[] = [];
 var categoryDict: { [id: number]: CategoryItem } = {};
 var childrenDict: { [id: number]: CategoryItem[] } = {};
@@ -21,6 +25,8 @@ var slugDict: { [slug: string]: CategoryItem } = {};
 const currentCategory = ref<CategoryItem>();
 const currentChildren = ref<CategoryItem[]>();
 const currentItems = ref<ItemListEntry[]>();
+
+const newCategoryDialog = useTemplateRef("newCategoryDialog");
 
 const fillDict = (cats: CategoryTreeResponse[]) => {
     for (let c of cats) {
@@ -84,13 +90,17 @@ onBeforeRouteUpdate(async (to, from) => {
         await updateCurrentCat(<string>to.params.id);
     }
 });
+
+const onCategoryCreated = async (newCategoryId: number) => {
+    await refreshCategories()
+}
 </script>
 
 <template>
     <div class="detailContainer">
         <el-card>
             <template #header>
-                <CardHeader :title="currentCategory?.name!">
+                <CardHeader v-if="userStore?.loggedIn" :title="currentCategory?.name!" button-text="Add child +" @btn-clicked="newCategoryDialog?.openCreateCategoryDialog(Number(route.params.id))" @categoryCreated="onCategoryCreated">
                 </CardHeader>
             </template>
             <ul>
@@ -112,6 +122,8 @@ onBeforeRouteUpdate(async (to, from) => {
             XD
         </div>
     </div>
+
+    <NewCategoryDialog ref="newCategoryDialog"></NewCategoryDialog>
 </template>
 
 <style lang="scss" scoped>

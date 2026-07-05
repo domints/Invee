@@ -1,10 +1,10 @@
 <script setup lang="ts">
-import { getUserInfo } from '@/client';
+import { getLoggedInUserInfo } from '@/client';
 import { useUserStore } from '@/stores/user';
 
 const userStore = useUserStore();
 
-let userResponse = await getUserInfo();
+let userResponse = await getLoggedInUserInfo();
 if (userResponse.data) {
   userStore.login(userResponse.data);
 }
@@ -13,9 +13,9 @@ else {
 }
 </script>
 <template>
-  <div class="about">
+  <div class="">
     <h1>Hi {{ userStore.user?.name }}!</h1>
-    You can go back <RouterLink to="/admin">home</RouterLink> now.
+    You can go back <RouterLink to="/home">home</RouterLink> now.
   </div>
 </template>
 

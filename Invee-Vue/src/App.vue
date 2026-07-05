@@ -1,8 +1,10 @@
 <script setup lang="ts">
 import { RouterLink, RouterView } from 'vue-router'
 import { useUserStore } from './stores/user';
+import { getUserInfo } from './client';
 
 const userStore = useUserStore();
+
 
 </script>
 
@@ -20,7 +22,7 @@ const userStore = useUserStore();
       <RouterLink to="/">Home</RouterLink>
       <template v-if="userStore.loggedIn">
         <RouterLink to="/admin">Administration</RouterLink>
-        Hi {{ userStore.user?.username }}! 
+        <span>Hi {{ userStore.user?.username }}!</span>
       </template>
       <template v-else>
         <RouterLink to="/login">Login</RouterLink>
@@ -85,6 +87,14 @@ header {
       height: 100%;
       padding-left: 2rem;
       padding-right: 2rem;
+    }
+
+    span {
+      height: 100%;
+      padding-left: 2rem;
+      padding-right: 2rem;
+      padding-top: 3px;
+      padding-left: 3px;
     }
   }
 }
