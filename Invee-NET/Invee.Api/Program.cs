@@ -128,11 +128,11 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseCors();
-
+app.UseStaticFiles();
 app.UseAuthentication();
 app.UseAuthorization();
 
-app.UseStaticFiles();
+
 app.MapGroup("/api")
     .MapApis();
 
