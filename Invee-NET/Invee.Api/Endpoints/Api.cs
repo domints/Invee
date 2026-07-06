@@ -1,21 +1,91 @@
 using System;
 using System.Collections.Generic;
+using System.IdentityModel.Tokens.Jwt;
 using System.Linq;
+using System.Security.Claims;
+using System.Text;
 using System.Threading.Tasks;
 using Invee.Api.Models;
 using Invee.Application.Models;
 using Invee.Application.Queries;
 using Invee.Application.Queries.ImageQueries;
+using Invee.Data.Database;
 using MediatR;
+using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.IdentityModel.Tokens;
 
 namespace Invee.Api.Endpoints
 {
+    public record HealthResponse(string Status, string Database, string Version);
+
     public static class Api
     {
         public static RouteGroupBuilder MapApis(this RouteGroupBuilder group)
         {
+            group.MapGet("/health", async (InveeContext db, IWebHostEnvironment env, CancellationToken ct) =>
+            {
+                string dbStatus;
+                try
+                {
+                    await db.Database.CanConnectAsync(ct);
+                    dbStatus = "ok";
+                }
+                catch
+                {
+                    dbStatus = "error";
+                }
+
+                var versionPath = Path.Combine(env.ContentRootPath, "version.txt");
+                var version = File.Exists(versionPath)
+                    ? (await File.ReadAllTextAsync(versionPath, ct)).Trim()
+                    : "unknown";
+
+                var overallStatus = dbStatus == "ok" ? "ok" : "degraded";
+                return Results.Ok(new HealthResponse(overallStatus, dbStatus, version));
+            }).AllowAnonymous().WithName("GetHealth");
+
+            group.MapGet("/auth/mobile-token",
+                [Authorize(AuthenticationSchemes = CookieAuthenticationDefaults.AuthenticationScheme)]
+                (HttpContext ctx, IConfiguration cfg) =>
+                {
+                    var jwtSection = cfg.GetSection("JwtSettings");
+                    var secretKey = jwtSection["SecretKey"] ?? string.Empty;
+                    if (string.IsNullOrWhiteSpace(secretKey))
+                        return Results.Problem("JWT secret key is not configured.", statusCode: 500);
+
+                    var issuer = jwtSection["Issuer"] ?? "invee";
+                    var audience = jwtSection["Audience"] ?? "invee-mobile";
+                    var expiryDays = jwtSection.GetValue<int>("ExpiryDays", 90);
+
+                    var user = ctx.User;
+                    var claims = new List<Claim>
+                    {
+                        new(JwtRegisteredClaimNames.Sub,
+                            user.FindFirstValue(JwtRegisteredClaimNames.Sub)
+                            ?? user.FindFirstValue(ClaimTypes.NameIdentifier)
+                            ?? user.Identity?.Name ?? "unknown"),
+                        new(JwtRegisteredClaimNames.Name,
+                            user.FindFirstValue(JwtRegisteredClaimNames.Name)
+                            ?? user.Identity?.Name ?? "unknown"),
+                        new(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
+                    };
+
+                    var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secretKey));
+                    var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
+                    var token = new JwtSecurityToken(
+                        issuer: issuer,
+                        audience: audience,
+                        claims: claims,
+                        expires: DateTime.UtcNow.AddDays(expiryDays),
+                        signingCredentials: creds);
+
+                    return Results.Ok(new { token = new JwtSecurityTokenHandler().WriteToken(token) });
+                }).WithName("GetMobileToken");
+
             group.MapGet("/auth", (string redirect) => Results.Redirect(redirect)).ExcludeFromDescription();
             group.MapGet("/user", (HttpContext context, IMediator mediator, CancellationToken cancellationToken) => mediator.Send(new UserInfo(context.User), cancellationToken)).WithName("GetUserInfo").AllowAnonymous();
             group.MapGet("/user/login", (HttpContext context, IMediator mediator, CancellationToken cancellationToken) => mediator.Send(new UserInfo(context.User), cancellationToken)).WithName("GetLoggedInUserInfo");

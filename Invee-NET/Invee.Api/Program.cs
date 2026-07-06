@@ -1,4 +1,5 @@
 using System.IdentityModel.Tokens.Jwt;
+using System.Text;
 using System.Text.Json.Serialization;
 using Invee.Api.Endpoints;
 using Invee.Api.Services;
@@ -6,11 +7,14 @@ using Invee.Application.Services;
 using Invee.Data.Database;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authentication.OpenIdConnect;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Protocols.OpenIdConnect;
+using Microsoft.IdentityModel.Tokens;
+using Microsoft.Net.Http.Headers;
 using Microsoft.OpenApi;
 using Scalar.AspNetCore;
 using Unchase.Swashbuckle.AspNetCore.Extensions.Extensions;
@@ -37,10 +41,39 @@ builder.Services.AddCors(options =>
         });
 });
 
+var jwtSection = builder.Configuration.GetSection("JwtSettings");
+var jwtSecretKey = jwtSection["SecretKey"] ?? string.Empty;
+
 builder.Services.AddAuthentication(options =>
 {
-    options.DefaultScheme = CookieAuthenticationDefaults.AuthenticationScheme;
+    // Route to JWT Bearer when an Authorization: Bearer header is present,
+    // otherwise fall through to Cookie auth for browser-based sessions.
+    options.DefaultScheme = "MultiScheme";
     options.DefaultChallengeScheme = OpenIdConnectDefaults.AuthenticationScheme;
+})
+.AddPolicyScheme("MultiScheme", null, opts =>
+{
+    opts.ForwardDefaultSelector = ctx =>
+    {
+        var authHeader = ctx.Request.Headers[HeaderNames.Authorization].FirstOrDefault();
+        if (authHeader?.StartsWith("Bearer ") == true)
+            return JwtBearerDefaults.AuthenticationScheme;
+        return CookieAuthenticationDefaults.AuthenticationScheme;
+    };
+})
+.AddJwtBearer(opts =>
+{
+    opts.TokenValidationParameters = new TokenValidationParameters
+    {
+        ValidateIssuerSigningKey = true,
+        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSecretKey)),
+        ValidateIssuer = true,
+        ValidIssuer = jwtSection["Issuer"],
+        ValidateAudience = true,
+        ValidAudience = jwtSection["Audience"],
+        ValidateLifetime = true,
+        ClockSkew = TimeSpan.Zero,
+    };
 })
 .AddCookie(options =>
 {
