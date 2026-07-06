@@ -5,5 +5,5 @@ using MediatR;
 
 namespace Invee.Application.Commands.ItemCommands
 {
-    public record CreateItem(string Name, int CategoryId, int StorageId, string? Slug, QuantityType QuantityType = QuantityType.None, DateTime? ExpiresAt = null) : IRequest<OperationResult<int>>;
+    public record CreateItem(string Name, int CategoryId, int StorageId, string? Slug, QuantityType QuantityType = QuantityType.None, decimal? Quantity = null, DateTime? ExpiresAt = null) : IRequest<OperationResult<int>>;
 }

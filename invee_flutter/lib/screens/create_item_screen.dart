@@ -1,26 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 import '../models/barcode_type.dart';
 import '../models/category.dart';
 import '../models/storage.dart';
 import '../services/api_service.dart';
+import '../widgets/entity_picker_modal.dart';
 import 'item_detail_screen.dart';
-
-class _CategoryEntry {
-  final int id;
-  final String displayName;
-  const _CategoryEntry({required this.id, required this.displayName});
-}
-
-List<_CategoryEntry> _flattenCategories(
-    List<CategoryTreeResponse> nodes, String prefix) {
-  final result = <_CategoryEntry>[];
-  for (final node in nodes) {
-    final label = prefix.isEmpty ? node.name : '$prefix / ${node.name}';
-    result.add(_CategoryEntry(id: node.id, displayName: label));
-    result.addAll(_flattenCategories(node.children, label));
-  }
-  return result;
-}
 
 class CreateItemScreen extends StatefulWidget {
   final ApiService apiService;
@@ -49,14 +34,15 @@ class CreateItemScreen extends StatefulWidget {
 class _CreateItemScreenState extends State<CreateItemScreen> {
   final _formKey = GlobalKey<FormState>();
   final _nameController = TextEditingController();
+  final _quantityController = TextEditingController(text: '1');
 
-  List<_CategoryEntry>? _categories;
-  List<StorageEntry>? _storages;
+  List<PickerEntry>? _categoryEntries;
+  List<PickerEntry>? _storageEntries;
   bool _loadingData = true;
   String? _loadError;
 
-  int? _selectedCategoryId;
-  int? _selectedStorageId;
+  PickerEntry? _selectedCategory;
+  PickerEntry? _selectedStorage;
   int _quantityType = 0;
   DateTime? _expiresAt;
 
@@ -64,11 +50,23 @@ class _CreateItemScreenState extends State<CreateItemScreen> {
   bool _offLookupLoading = false;
   String? _offLookupError;
 
+  /// Image to upload after item creation (camera or gallery).
+  XFile? _pendingPhoto;
+
+  /// Image URL from Open Food Facts to upload after creation.
+  String? _offImageUrl;
+
   @override
   void initState() {
     super.initState();
-    _selectedCategoryId = widget.prefillCategoryId;
     _loadData();
+  }
+
+  @override
+  void dispose() {
+    _nameController.dispose();
+    _quantityController.dispose();
+    super.dispose();
   }
 
   Future<void> _loadData() async {
@@ -79,15 +77,29 @@ class _CreateItemScreenState extends State<CreateItemScreen> {
     try {
       final results = await Future.wait([
         widget.apiService.getCategoryTree(),
-        widget.apiService.getStorages(),
+        widget.apiService.getStorageTree(),
       ]);
       if (!mounted) return;
       final catTree = results[0] as List<CategoryTreeResponse>;
-      final storages = results[1] as List<StorageEntry>;
+      final stoTree = results[1] as List<StorageTreeResponse>;
+      final catEntries = PickerEntry.fromCategoryTree(catTree);
+      final stoEntries = PickerEntry.fromStorageTree(stoTree);
       setState(() {
-        _categories = _flattenCategories(catTree, '');
-        _storages = storages;
+        _categoryEntries = catEntries;
+        _storageEntries = stoEntries;
         _loadingData = false;
+        // Pre-select category if provided
+        if (widget.prefillCategoryId != null) {
+          _selectedCategory = catEntries
+              .where((e) => e.id == widget.prefillCategoryId)
+              .firstOrNull;
+          if (_selectedCategory == null && widget.prefillCategoryName != null) {
+            _selectedCategory = PickerEntry(
+              id: widget.prefillCategoryId!,
+              label: widget.prefillCategoryName!,
+            );
+          }
+        }
       });
     } catch (e) {
       if (!mounted) return;
@@ -95,6 +107,36 @@ class _CreateItemScreenState extends State<CreateItemScreen> {
         _loadError = e.toString();
         _loadingData = false;
       });
+    }
+  }
+
+  Future<void> _pickCategory() async {
+    final entries = _categoryEntries;
+    if (entries == null) return;
+    final picked = await showEntityPicker(
+      context,
+      title: 'Select Category',
+      entries: entries,
+      selectedId: _selectedCategory?.id,
+      icon: Icons.folder_special_outlined,
+    );
+    if (picked != null && mounted) {
+      setState(() => _selectedCategory = picked);
+    }
+  }
+
+  Future<void> _pickStorage() async {
+    final entries = _storageEntries;
+    if (entries == null) return;
+    final picked = await showEntityPicker(
+      context,
+      title: 'Select Storage',
+      entries: entries,
+      selectedId: _selectedStorage?.id,
+      icon: Icons.warehouse_outlined,
+    );
+    if (picked != null && mounted) {
+      setState(() => _selectedStorage = picked);
     }
   }
 
@@ -120,11 +162,15 @@ class _CreateItemScreenState extends State<CreateItemScreen> {
         if (_nameController.text.isEmpty) {
           _nameController.text = result.productName;
         }
+        if (result.frontImageUrl != null) {
+          _offImageUrl = result.frontImageUrl;
+        }
       });
-      if (result.productName.isNotEmpty) {
+      if (mounted && result.productName.isNotEmpty) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Found: ${result.productName}'),
+            content: Text('Found: ${result.productName}'
+                '${result.frontImageUrl != null ? ' — photo will be imported' : ''}'),
             behavior: SnackBarBehavior.floating,
           ),
         );
@@ -138,9 +184,50 @@ class _CreateItemScreenState extends State<CreateItemScreen> {
     }
   }
 
+  Future<void> _takePhoto() async {
+    final picker = ImagePicker();
+    final image = await picker.pickImage(
+      source: ImageSource.camera,
+      imageQuality: 85,
+    );
+    if (image != null && mounted) {
+      setState(() {
+        _pendingPhoto = image;
+        _offImageUrl = null; // camera overrides OFFood image
+      });
+    }
+  }
+
+  Future<void> _pickPhoto() async {
+    final picker = ImagePicker();
+    final image = await picker.pickImage(
+      source: ImageSource.gallery,
+      imageQuality: 85,
+    );
+    if (image != null && mounted) {
+      setState(() {
+        _pendingPhoto = image;
+        _offImageUrl = null; // gallery overrides OFFood image
+      });
+    }
+  }
+
+  Future<void> _pickExpiryDate() async {
+    final picked = await showDatePicker(
+      context: context,
+      initialDate:
+          _expiresAt ?? DateTime.now().add(const Duration(days: 365)),
+      firstDate: DateTime.now(),
+      lastDate: DateTime.now().add(const Duration(days: 365 * 20)),
+    );
+    if (picked != null && mounted) {
+      setState(() => _expiresAt = picked);
+    }
+  }
+
   Future<void> _save() async {
     if (!_formKey.currentState!.validate()) return;
-    if (_selectedCategoryId == null) {
+    if (_selectedCategory == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Please select a category.'),
@@ -149,7 +236,7 @@ class _CreateItemScreenState extends State<CreateItemScreen> {
       );
       return;
     }
-    if (_selectedStorageId == null) {
+    if (_selectedStorage == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Please select a storage location.'),
@@ -163,16 +250,33 @@ class _CreateItemScreenState extends State<CreateItemScreen> {
     try {
       final itemId = await widget.apiService.createItem(
         name: _nameController.text.trim(),
-        categoryId: _selectedCategoryId!,
-        storageId: _selectedStorageId!,
+        categoryId: _selectedCategory!.id,
+        storageId: _selectedStorage!.id,
         quantityType: _quantityType,
+        quantity: _quantityType != 0
+            ? double.tryParse(_quantityController.text.trim())
+            : null,
         expiresAt: _expiresAt,
       );
 
+      // Attach barcode code if scanned
       final barcode = widget.prefillBarcode;
       final codeTypeInt = BarcodeType.fromCipherlab(widget.prefillCodeType);
       if (barcode != null && barcode.isNotEmpty && codeTypeInt != null) {
         await widget.apiService.addItemCode(itemId, codeTypeInt, barcode);
+      }
+
+      // Upload photo: camera/gallery takes priority, then OFFood image
+      if (_pendingPhoto != null) {
+        final bytes = await _pendingPhoto!.readAsBytes();
+        await widget.apiService.uploadItemImageFromBytes(
+          itemId,
+          bytes,
+          _pendingPhoto!.name,
+        );
+      } else if (_offImageUrl != null) {
+        await widget.apiService
+            .uploadItemImageFromUrl(itemId, _offImageUrl!);
       }
 
       if (!mounted) return;
@@ -192,24 +296,6 @@ class _CreateItemScreenState extends State<CreateItemScreen> {
         ),
       );
     }
-  }
-
-  Future<void> _pickExpiryDate() async {
-    final picked = await showDatePicker(
-      context: context,
-      initialDate: _expiresAt ?? DateTime.now().add(const Duration(days: 365)),
-      firstDate: DateTime.now(),
-      lastDate: DateTime.now().add(const Duration(days: 365 * 20)),
-    );
-    if (picked != null && mounted) {
-      setState(() => _expiresAt = picked);
-    }
-  }
-
-  @override
-  void dispose() {
-    _nameController.dispose();
-    super.dispose();
   }
 
   @override
@@ -272,13 +358,19 @@ class _CreateItemScreenState extends State<CreateItemScreen> {
           const SizedBox(height: 16),
           _buildNameField(),
           const SizedBox(height: 16),
-          _buildCategoryDropdown(),
+          _buildCategoryPicker(),
           const SizedBox(height: 16),
-          _buildStorageDropdown(),
+          _buildStoragePicker(),
           const SizedBox(height: 16),
           _buildQuantityTypeDropdown(),
+          if (_quantityType != 0) ...[
+            const SizedBox(height: 16),
+            _buildQuantityValueField(),
+          ],
           const SizedBox(height: 16),
           _buildExpiryField(),
+          const SizedBox(height: 16),
+          _buildPhotoSection(),
           const SizedBox(height: 32),
           FilledButton.icon(
             onPressed: _saving ? null : _save,
@@ -316,9 +408,10 @@ class _CreateItemScreenState extends State<CreateItemScreen> {
             const SizedBox(height: 8),
             Text(
               barcode,
-              style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                    fontFamily: 'monospace',
-                  ),
+              style: Theme.of(context)
+                  .textTheme
+                  .bodyLarge
+                  ?.copyWith(fontFamily: 'monospace'),
             ),
             Text(
               typeName,
@@ -331,10 +424,26 @@ class _CreateItemScreenState extends State<CreateItemScreen> {
                   padding: const EdgeInsets.only(bottom: 8),
                   child: Text(
                     _offLookupError!,
-                    style: Theme.of(context)
-                        .textTheme
-                        .bodySmall
-                        ?.copyWith(color: Theme.of(context).colorScheme.error),
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: Theme.of(context).colorScheme.error,
+                        ),
+                  ),
+                ),
+              if (_offImageUrl != null)
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 8),
+                  child: Row(
+                    children: [
+                      const Icon(Icons.image_outlined,
+                          size: 16, color: Colors.green),
+                      const SizedBox(width: 6),
+                      Text(
+                        'Product photo found — will be imported',
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                              color: Colors.green.shade700,
+                            ),
+                      ),
+                    ],
                   ),
                 ),
               OutlinedButton.icon(
@@ -373,75 +482,84 @@ class _CreateItemScreenState extends State<CreateItemScreen> {
     );
   }
 
-  Widget _buildCategoryDropdown() {
-    final cats = _categories ?? [];
+  Widget _buildCategoryPicker() {
     final locked = widget.prefillCategoryId != null;
-
-    return DropdownButtonFormField<int>(
-      initialValue: _selectedCategoryId,
-      decoration: InputDecoration(
-        labelText: 'Category *',
-        border: const OutlineInputBorder(),
-        prefixIcon: const Icon(Icons.category_outlined),
-        suffixIcon: locked
-            ? const Icon(Icons.lock_outline, size: 16)
-            : null,
+    return InkWell(
+      onTap: locked ? null : _pickCategory,
+      borderRadius: BorderRadius.circular(4),
+      child: InputDecorator(
+        decoration: InputDecoration(
+          labelText: 'Category *',
+          border: const OutlineInputBorder(),
+          prefixIcon: const Icon(Icons.folder_special_outlined),
+          suffixIcon: locked
+              ? const Icon(Icons.lock_outline, size: 18)
+              : const Icon(Icons.arrow_drop_down),
+        ),
+        child: Text(
+          _selectedCategory?.label ?? 'Select category…',
+          style: _selectedCategory == null
+              ? TextStyle(color: Theme.of(context).hintColor)
+              : null,
+          overflow: TextOverflow.ellipsis,
+        ),
       ),
-      items: cats
-          .map(
-            (c) => DropdownMenuItem(
-              value: c.id,
-              child: Text(c.displayName, overflow: TextOverflow.ellipsis),
-            ),
-          )
-          .toList(),
-      onChanged: locked ? null : (v) => setState(() => _selectedCategoryId = v),
-      validator: (v) => v == null ? 'Please select a category' : null,
     );
   }
 
-  Widget _buildStorageDropdown() {
-    final storages = _storages ?? [];
-
-    return DropdownButtonFormField<int>(
-      initialValue: _selectedStorageId,
-      decoration: const InputDecoration(
-        labelText: 'Storage *',
-        border: OutlineInputBorder(),
-        prefixIcon: Icon(Icons.inventory_2_outlined),
+  Widget _buildStoragePicker() {
+    return InkWell(
+      onTap: _pickStorage,
+      borderRadius: BorderRadius.circular(4),
+      child: InputDecorator(
+        decoration: const InputDecoration(
+          labelText: 'Storage *',
+          border: OutlineInputBorder(),
+          prefixIcon: Icon(Icons.warehouse_outlined),
+          suffixIcon: Icon(Icons.arrow_drop_down),
+        ),
+        child: Text(
+          _selectedStorage?.label ?? 'Select storage…',
+          style: _selectedStorage == null
+              ? TextStyle(color: Theme.of(context).hintColor)
+              : null,
+          overflow: TextOverflow.ellipsis,
+        ),
       ),
-      items: storages
-          .map(
-            (s) => DropdownMenuItem(
-              value: s.id,
-              child: Text(s.displayName, overflow: TextOverflow.ellipsis),
-            ),
-          )
-          .toList(),
-      onChanged: (v) => setState(() => _selectedStorageId = v),
-      validator: (v) => v == null ? 'Please select a storage location' : null,
     );
   }
 
   Widget _buildQuantityTypeDropdown() {
-    const options = [
-      (0, 'None'),
-      (1, 'Levels'),
-      (2, 'Precise'),
-    ];
     return DropdownButtonFormField<int>(
       initialValue: _quantityType,
       decoration: const InputDecoration(
-        labelText: 'Quantity Type',
+        labelText: 'Quantity type',
         border: OutlineInputBorder(),
         prefixIcon: Icon(Icons.straighten_outlined),
       ),
-      items: options
-          .map(
-            (o) => DropdownMenuItem(value: o.$1, child: Text(o.$2)),
-          )
-          .toList(),
+      items: const [
+        DropdownMenuItem(value: 0, child: Text('None')),
+        DropdownMenuItem(value: 1, child: Text('Levels')),
+        DropdownMenuItem(value: 2, child: Text('Precise')),
+      ],
       onChanged: (v) => setState(() => _quantityType = v ?? 0),
+    );
+  }
+
+  Widget _buildQuantityValueField() {
+    return TextFormField(
+      controller: _quantityController,
+      decoration: const InputDecoration(
+        labelText: 'Quantity',
+        border: OutlineInputBorder(),
+        prefixIcon: Icon(Icons.format_list_numbered),
+      ),
+      keyboardType: const TextInputType.numberWithOptions(decimal: true),
+      validator: (v) {
+        if (v == null || v.trim().isEmpty) return 'Quantity is required';
+        if (double.tryParse(v.trim()) == null) return 'Enter a valid number';
+        return null;
+      },
     );
   }
 
@@ -450,24 +568,95 @@ class _CreateItemScreenState extends State<CreateItemScreen> {
       onTap: _pickExpiryDate,
       borderRadius: BorderRadius.circular(4),
       child: InputDecorator(
-        decoration: const InputDecoration(
-          labelText: 'Expiry Date',
-          border: OutlineInputBorder(),
-          prefixIcon: Icon(Icons.event_outlined),
-          suffixIcon: Icon(Icons.calendar_today_outlined, size: 18),
+        decoration: InputDecoration(
+          labelText: 'Expiry date',
+          border: const OutlineInputBorder(),
+          prefixIcon: const Icon(Icons.event_outlined),
+          suffixIcon: _expiresAt != null
+              ? IconButton(
+                  icon: const Icon(Icons.clear, size: 18),
+                  onPressed: () => setState(() => _expiresAt = null),
+                )
+              : const Icon(Icons.calendar_today_outlined, size: 18),
         ),
         child: Text(
           _expiresAt == null
               ? 'Not set'
               : '${_expiresAt!.year}-${_expiresAt!.month.toString().padLeft(2, '0')}-${_expiresAt!.day.toString().padLeft(2, '0')}',
           style: _expiresAt == null
-              ? Theme.of(context)
-                  .textTheme
-                  .bodyMedium
-                  ?.copyWith(color: Theme.of(context).hintColor)
-              : Theme.of(context).textTheme.bodyMedium,
+              ? TextStyle(color: Theme.of(context).hintColor)
+              : null,
         ),
       ),
+    );
+  }
+
+  Widget _buildPhotoSection() {
+    final theme = Theme.of(context);
+        return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text('Photo', style: theme.textTheme.labelLarge),
+        const SizedBox(height: 8),
+        if (_pendingPhoto != null)
+          Padding(
+            padding: const EdgeInsets.only(bottom: 8),
+            child: Row(
+              children: [
+                const Icon(Icons.check_circle_outline,
+                    size: 16, color: Colors.green),
+                const SizedBox(width: 6),
+                Expanded(
+                  child: Text(
+                    _pendingPhoto!.name,
+                    style: theme.textTheme.bodySmall,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+                IconButton(
+                  icon: const Icon(Icons.clear, size: 18),
+                  onPressed: () => setState(() => _pendingPhoto = null),
+                ),
+              ],
+            ),
+          )
+        else if (_offImageUrl != null)
+          Padding(
+            padding: const EdgeInsets.only(bottom: 8),
+            child: Row(
+              children: [
+                const Icon(Icons.image_outlined,
+                    size: 16, color: Colors.green),
+                const SizedBox(width: 6),
+                Expanded(
+                  child: Text(
+                    'Product photo from Open Food Facts',
+                    style: theme.textTheme.bodySmall,
+                  ),
+                ),
+                IconButton(
+                  icon: const Icon(Icons.clear, size: 18),
+                  onPressed: () => setState(() => _offImageUrl = null),
+                ),
+              ],
+            ),
+          ),
+        Row(
+          children: [
+            OutlinedButton.icon(
+              onPressed: _takePhoto,
+              icon: const Icon(Icons.camera_alt_outlined, size: 18),
+              label: const Text('Camera'),
+            ),
+            const SizedBox(width: 8),
+            OutlinedButton.icon(
+              onPressed: _pickPhoto,
+              icon: const Icon(Icons.photo_library_outlined, size: 18),
+              label: const Text('Gallery'),
+            ),
+          ],
+        ),
+      ],
     );
   }
 }

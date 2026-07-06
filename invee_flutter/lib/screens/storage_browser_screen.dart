@@ -1,21 +1,21 @@
 import 'package:flutter/material.dart';
-import '../models/category.dart';
+import '../models/storage.dart';
 import '../services/api_service.dart';
-import 'category_detail_screen.dart';
+import 'storage_detail_screen.dart';
 
-/// Body-only widget (no Scaffold) listing top-level categories.
+/// Body-only widget (no Scaffold) listing top-level storages.
 /// Embedded inside [MainShell] via an IndexedStack.
-class CategoryBrowserBody extends StatefulWidget {
+class StorageBrowserBody extends StatefulWidget {
   final ApiService apiService;
 
-  const CategoryBrowserBody({super.key, required this.apiService});
+  const StorageBrowserBody({super.key, required this.apiService});
 
   @override
-  State<CategoryBrowserBody> createState() => CategoryBrowserBodyState();
+  State<StorageBrowserBody> createState() => StorageBrowserBodyState();
 }
 
-class CategoryBrowserBodyState extends State<CategoryBrowserBody> {
-  List<CategoryTreeResponse>? _tree;
+class StorageBrowserBodyState extends State<StorageBrowserBody> {
+  List<StorageTreeResponse>? _tree;
   String? _error;
   bool _loading = true;
 
@@ -31,7 +31,7 @@ class CategoryBrowserBodyState extends State<CategoryBrowserBody> {
       _error = null;
     });
     try {
-      final tree = await widget.apiService.getCategoryTree();
+      final tree = await widget.apiService.getStorageTree();
       if (mounted) {
         setState(() {
           _tree = tree;
@@ -79,10 +79,10 @@ class CategoryBrowserBodyState extends State<CategoryBrowserBody> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Icons.folder_special_outlined, size: 64, color: Colors.grey),
+            Icon(Icons.warehouse_outlined, size: 64, color: Colors.grey),
             SizedBox(height: 12),
             Text(
-              'No categories yet.',
+              'No storages yet.',
               style: TextStyle(color: Colors.grey),
             ),
             SizedBox(height: 4),
@@ -99,8 +99,8 @@ class CategoryBrowserBodyState extends State<CategoryBrowserBody> {
       child: ListView.separated(
         itemCount: _tree!.length,
         separatorBuilder: (_, _) => const Divider(height: 1),
-        itemBuilder: (ctx, i) => _CategoryRootTile(
-          category: _tree![i],
+        itemBuilder: (ctx, i) => _StorageRootTile(
+          storage: _tree![i],
           apiService: widget.apiService,
           onChanged: reload,
         ),
@@ -109,13 +109,13 @@ class CategoryBrowserBodyState extends State<CategoryBrowserBody> {
   }
 }
 
-class _CategoryRootTile extends StatelessWidget {
-  final CategoryTreeResponse category;
+class _StorageRootTile extends StatelessWidget {
+  final StorageTreeResponse storage;
   final ApiService apiService;
   final VoidCallback onChanged;
 
-  const _CategoryRootTile({
-    required this.category,
+  const _StorageRootTile({
+    required this.storage,
     required this.apiService,
     required this.onChanged,
   });
@@ -125,17 +125,17 @@ class _CategoryRootTile extends StatelessWidget {
     final theme = Theme.of(context);
     return ListTile(
       leading: CircleAvatar(
-        backgroundColor: theme.colorScheme.secondaryContainer,
+        backgroundColor: theme.colorScheme.tertiaryContainer,
         child: Icon(
-          Icons.folder_special_outlined,
-          color: theme.colorScheme.onSecondaryContainer,
+          Icons.warehouse_outlined,
+          color: theme.colorScheme.onTertiaryContainer,
           size: 20,
         ),
       ),
-      title: Text(category.name),
-      subtitle: category.children.isNotEmpty
+      title: Text(storage.name),
+      subtitle: storage.children.isNotEmpty
           ? Text(
-              '${category.children.length} subcategor${category.children.length == 1 ? 'y' : 'ies'}',
+              '${storage.children.length} sub-storage${storage.children.length == 1 ? '' : 's'}',
               style: theme.textTheme.bodySmall,
             )
           : null,
@@ -143,10 +143,9 @@ class _CategoryRootTile extends StatelessWidget {
       onTap: () async {
         final changed = await Navigator.of(context).push<bool>(
           MaterialPageRoute(
-            builder: (_) => CategoryDetailScreen(
-              categoryId: category.id,
-              categoryName: category.name,
-              preloadedChildren: category.children,
+            builder: (_) => StorageDetailScreen(
+              storageId: storage.id,
+              storageName: storage.name,
               apiService: apiService,
             ),
           ),

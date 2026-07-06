@@ -47,6 +47,7 @@ namespace Invee.Application.Commands.ItemCommands
                 CategoryId = request.CategoryId,
                 StorageId = request.StorageId,
                 QuantityType = request.QuantityType,
+                Quantity = request.Quantity,
                 AddedAt = DateTime.UtcNow,
                 ExpiresAt = request.ExpiresAt
             };

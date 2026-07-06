@@ -1,6 +1,7 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <uses-permission android:name="android.permission.CAMERA" />
     <application
-        android:label="invee_flutter"
+        android:label="Invee"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
         <activity

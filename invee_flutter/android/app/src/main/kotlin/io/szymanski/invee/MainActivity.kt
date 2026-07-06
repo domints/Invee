@@ -1,4 +1,4 @@
-package com.example.invee_flutter
+package io.szymanski.invee
 
 import android.content.BroadcastReceiver
 import android.content.Context
@@ -12,7 +12,7 @@ import io.flutter.plugin.common.EventChannel
 class MainActivity : FlutterActivity() {
 
     companion object {
-        private const val SCANNER_CHANNEL = "com.example.invee_flutter/scanner"
+        private const val SCANNER_CHANNEL = "io.szymanski.invee/scanner"
 
         // Newer ReaderService API (no barcodebase.jar required)
         private const val ACTION_PASS_DATA = "com.cipherlab.barcodebaseapi.PASS_DATA_2_APP"

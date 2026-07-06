@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../models/barcode_type.dart';
 import '../models/item.dart';
 import '../services/api_service.dart';
+import 'edit_item_screen.dart';
 
 class ItemDetailScreen extends StatefulWidget {
   final int itemId;
@@ -43,12 +44,30 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
     }
   }
 
+  Future<void> _openEdit(ItemResponse item) async {
+    final updated = await Navigator.of(context).push<bool>(
+      MaterialPageRoute(
+        builder: (_) => EditItemScreen(
+          item: item,
+          apiService: widget.apiService,
+        ),
+      ),
+    );
+    if (updated == true) _loadItem();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: Text(_item?.name ?? 'Item Detail'),
         actions: [
+          if (_item != null)
+            IconButton(
+              icon: const Icon(Icons.edit_outlined),
+              tooltip: 'Edit item',
+              onPressed: () => _openEdit(_item!),
+            ),
           IconButton(
             icon: const Icon(Icons.refresh),
             tooltip: 'Refresh',
@@ -87,15 +106,32 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
     }
     if (_item == null) return const SizedBox();
 
-    return _ItemDetailView(item: _item!, apiService: widget.apiService);
+    return _ItemDetailView(
+      item: _item!,
+      apiService: widget.apiService,
+      onReload: _loadItem,
+    );
   }
 }
 
-class _ItemDetailView extends StatelessWidget {
+class _ItemDetailView extends StatefulWidget {
   final ItemResponse item;
   final ApiService apiService;
+  final VoidCallback onReload;
 
-  const _ItemDetailView({required this.item, required this.apiService});
+  const _ItemDetailView({
+    required this.item,
+    required this.apiService,
+    required this.onReload,
+  });
+
+  @override
+  State<_ItemDetailView> createState() => _ItemDetailViewState();
+}
+
+class _ItemDetailViewState extends State<_ItemDetailView> {
+  ItemResponse get item => widget.item;
+  ApiService get apiService => widget.apiService;
 
   @override
   Widget build(BuildContext context) {
@@ -107,7 +143,7 @@ class _ItemDetailView extends StatelessWidget {
         _buildInfoSection(context),
         if (item.note != null && item.note!.isNotEmpty)
           _buildNoteSection(context),
-        if (item.tags.isNotEmpty) _buildTagsSection(context),
+        _buildTagsSection(context),
         if (item.codes.isNotEmpty) _buildCodesSection(context),
         if (item.borrowings.isNotEmpty) _buildBorrowingsSection(context),
         const SizedBox(height: 24),
@@ -189,44 +225,6 @@ class _ItemDetailView extends StatelessWidget {
 
   Widget _buildInfoSection(BuildContext context) {
     final theme = Theme.of(context);
-    final rows = <_InfoRow>[];
-
-    rows.add(_InfoRow(
-      icon: Icons.category_outlined,
-      label: 'Category',
-      value: item.category.name,
-    ));
-
-    rows.add(_InfoRow(
-      icon: Icons.warehouse_outlined,
-      label: 'Storage',
-      value: item.storage.name,
-    ));
-
-    if (item.quantity != null) {
-      final qty = item.quantity! % 1 == 0
-          ? item.quantity!.toInt().toString()
-          : item.quantity!.toString();
-      rows.add(_InfoRow(
-        icon: Icons.format_list_numbered,
-        label: 'Quantity',
-        value: qty,
-      ));
-    }
-
-    rows.add(_InfoRow(
-      icon: Icons.calendar_today_outlined,
-      label: 'Added',
-      value: _formatDate(item.addedAt),
-    ));
-
-    if (item.expiresAt != null) {
-      rows.add(_InfoRow(
-        icon: Icons.event_outlined,
-        label: 'Expires',
-        value: _formatDate(item.expiresAt!),
-      ));
-    }
 
     return Card(
       margin: const EdgeInsets.fromLTRB(16, 12, 16, 0),
@@ -242,32 +240,167 @@ class _ItemDetailView extends StatelessWidget {
               ),
             ),
           ),
-          ...rows.map((r) => _buildInfoRow(context, r)),
+          _buildInfoRow(
+            context,
+            icon: Icons.category_outlined,
+            label: 'Category',
+            value: item.category.name,
+          ),
+          _buildInfoRow(
+            context,
+            icon: Icons.warehouse_outlined,
+            label: 'Storage',
+            value: item.storage.name,
+          ),
+          _buildQuantityRow(context),
+          _buildInfoRow(
+            context,
+            icon: Icons.calendar_today_outlined,
+            label: 'Added',
+            value: _formatDate(item.addedAt),
+          ),
+          if (item.expiresAt != null)
+            _buildInfoRow(
+              context,
+              icon: Icons.event_outlined,
+              label: 'Expires',
+              value: _formatDate(item.expiresAt!),
+            ),
         ],
       ),
     );
   }
 
-  Widget _buildInfoRow(BuildContext context, _InfoRow row) {
+  Widget _buildQuantityRow(BuildContext context) {
     final theme = Theme.of(context);
+    final qty = item.quantity == null
+        ? null
+        : item.quantity! % 1 == 0
+            ? item.quantity!.toInt().toString()
+            : item.quantity!.toString();
+
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
       child: Row(
         children: [
-          Icon(row.icon, size: 20, color: theme.colorScheme.onSurface.withValues(alpha: 0.5)),
+          Icon(Icons.format_list_numbered, size: 20,
+              color: theme.colorScheme.onSurface.withValues(alpha: 0.5)),
           const SizedBox(width: 12),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  row.label,
+                  'Quantity',
                   style: theme.textTheme.labelSmall?.copyWith(
                     color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
                   ),
                 ),
                 const SizedBox(height: 2),
-                Text(row.value, style: theme.textTheme.bodyMedium),
+                Text(
+                  qty ?? '—',
+                  style: theme.textTheme.bodyMedium,
+                ),
+              ],
+            ),
+          ),
+          IconButton(
+            icon: const Icon(Icons.edit_outlined, size: 18),
+            tooltip: 'Edit quantity',
+            onPressed: () => _showEditQuantityDialog(context),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _showEditQuantityDialog(BuildContext context) async {
+    final messenger = ScaffoldMessenger.of(context);
+    final controller = TextEditingController(
+      text: item.quantity?.toString() ?? '',
+    );
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Edit Quantity'),
+        content: TextField(
+          controller: controller,
+          keyboardType: const TextInputType.numberWithOptions(decimal: true),
+          decoration: const InputDecoration(
+            labelText: 'Quantity',
+            border: OutlineInputBorder(),
+          ),
+          autofocus: true,
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(false),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(ctx).pop(true),
+            child: const Text('Save'),
+          ),
+        ],
+      ),
+    );
+    controller.dispose();
+    if (confirmed != true || !mounted) return;
+
+    final raw = controller.text.trim();
+    final newQty = raw.isEmpty ? null : double.tryParse(raw);
+
+    try {
+      await apiService.updateItem(
+        id: item.id,
+        name: item.name,
+        categoryId: item.category.id,
+        storageId: item.storage.id,
+        quantityType: _quantityTypeInt(item.quantityType),
+        quantity: newQty,
+        broken: item.broken,
+        note: item.note,
+        slug: item.slug,
+        expiresAt: item.expiresAt,
+      );
+      if (mounted) widget.onReload();
+    } catch (e) {
+      if (!mounted) return;
+      messenger.showSnackBar(
+        SnackBar(
+          content: Text('Failed to update quantity: $e'),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    }
+  }
+
+  Widget _buildInfoRow(
+    BuildContext context, {
+    required IconData icon,
+    required String label,
+    required String value,
+  }) {
+    final theme = Theme.of(context);
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+      child: Row(
+        children: [
+          Icon(icon, size: 20,
+              color: theme.colorScheme.onSurface.withValues(alpha: 0.5)),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  label,
+                  style: theme.textTheme.labelSmall?.copyWith(
+                    color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(value, style: theme.textTheme.bodyMedium),
               ],
             ),
           ),
@@ -316,30 +449,58 @@ class _ItemDetailView extends StatelessWidget {
           children: [
             Row(
               children: [
-                Icon(Icons.label_outline, size: 18, color: theme.colorScheme.primary),
+                Icon(Icons.label_outline, size: 18,
+                    color: theme.colorScheme.primary),
                 const SizedBox(width: 8),
-                Text(
-                  'Tags',
-                  style: theme.textTheme.labelLarge?.copyWith(
-                    color: theme.colorScheme.primary,
+                Expanded(
+                  child: Text(
+                    'Tags',
+                    style: theme.textTheme.labelLarge?.copyWith(
+                      color: theme.colorScheme.primary,
+                    ),
                   ),
+                ),
+                IconButton(
+                  icon: const Icon(Icons.edit_outlined, size: 18),
+                  tooltip: 'Edit tags',
+                  onPressed: () => _showEditTagsSheet(context),
                 ),
               ],
             ),
-            const SizedBox(height: 8),
-            Wrap(
-              spacing: 8,
-              runSpacing: 4,
-              children: item.tags
-                  .map((t) => Chip(
-                        label: Text(t),
-                        materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                        visualDensity: VisualDensity.compact,
-                      ))
-                  .toList(),
-            ),
+            if (item.tags.isNotEmpty) ...[
+              const SizedBox(height: 8),
+              Wrap(
+                spacing: 8,
+                runSpacing: 4,
+                children: item.tags
+                    .map((t) => Chip(
+                          label: Text(t),
+                          materialTapTargetSize:
+                              MaterialTapTargetSize.shrinkWrap,
+                          visualDensity: VisualDensity.compact,
+                        ))
+                    .toList(),
+              ),
+            ] else ...[
+              const SizedBox(height: 4),
+              Text('No tags', style: theme.textTheme.bodySmall?.copyWith(
+                color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
+              )),
+            ],
           ],
         ),
+      ),
+    );
+  }
+
+  Future<void> _showEditTagsSheet(BuildContext context) async {
+    await showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      builder: (ctx) => _TagEditorSheet(
+        item: item,
+        apiService: apiService,
+        onSaved: widget.onReload,
       ),
     );
   }
@@ -355,7 +516,8 @@ class _ItemDetailView extends StatelessWidget {
           children: [
             Row(
               children: [
-                Icon(Icons.qr_code, size: 18, color: theme.colorScheme.primary),
+                Icon(Icons.qr_code, size: 18,
+                    color: theme.colorScheme.primary),
                 const SizedBox(width: 8),
                 Text(
                   'Barcodes',
@@ -372,7 +534,8 @@ class _ItemDetailView extends StatelessWidget {
                 child: Row(
                   children: [
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 6, vertical: 2),
                       decoration: BoxDecoration(
                         color: theme.colorScheme.secondaryContainer,
                         borderRadius: BorderRadius.circular(4),
@@ -406,7 +569,8 @@ class _ItemDetailView extends StatelessWidget {
   Widget _buildBorrowingsSection(BuildContext context) {
     final theme = Theme.of(context);
     final active = item.borrowings
-        .where((b) => b.status == '1' || b.status == 'Active' || b.status == '2')
+        .where((b) =>
+            b.status == '1' || b.status == 'Active' || b.status == '2')
         .toList();
     if (active.isEmpty) return const SizedBox();
 
@@ -419,7 +583,8 @@ class _ItemDetailView extends StatelessWidget {
           children: [
             Row(
               children: [
-                Icon(Icons.person_outline, size: 18, color: theme.colorScheme.primary),
+                Icon(Icons.person_outline, size: 18,
+                    color: theme.colorScheme.primary),
                 const SizedBox(width: 8),
                 Text(
                   'Currently Borrowed',
@@ -441,7 +606,8 @@ class _ItemDetailView extends StatelessWidget {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(b.borrower, style: theme.textTheme.bodyMedium),
+                          Text(b.borrower,
+                              style: theme.textTheme.bodyMedium),
                           if (b.start != null)
                             Text(
                               'Since ${_formatDate(b.start!)}',
@@ -465,14 +631,272 @@ class _ItemDetailView extends StatelessWidget {
   }
 
   String _codeTypeName(String raw) => BarcodeType.displayName(raw);
+
+  int _quantityTypeInt(String type) {
+    switch (type.toLowerCase()) {
+      case 'levels':
+        return 1;
+      case 'precise':
+        return 2;
+      default:
+        return 0;
+    }
+  }
 }
 
-class _InfoRow {
-  final IconData icon;
-  final String label;
-  final String value;
+// ---------------------------------------------------------------------------
+// Tag editor bottom sheet
+// ---------------------------------------------------------------------------
 
-  const _InfoRow({required this.icon, required this.label, required this.value});
+class _TagEditorSheet extends StatefulWidget {
+  final ItemResponse item;
+  final ApiService apiService;
+  final VoidCallback onSaved;
+
+  const _TagEditorSheet({
+    required this.item,
+    required this.apiService,
+    required this.onSaved,
+  });
+
+  @override
+  State<_TagEditorSheet> createState() => _TagEditorSheetState();
+}
+
+class _TagEditorSheetState extends State<_TagEditorSheet> {
+  List<TagDto>? _allTags;
+  Set<int> _selectedIds = {};
+  bool _loading = true;
+  bool _saving = false;
+  String? _error;
+  final _newTagController = TextEditingController();
+  bool _creatingTag = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadTags();
+  }
+
+  @override
+  void dispose() {
+    _newTagController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _loadTags() async {
+    setState(() {
+      _loading = true;
+      _error = null;
+    });
+    try {
+      final tags = await widget.apiService.getTags();
+      if (!mounted) return;
+      final selectedIds = tags
+          .where((t) => widget.item.tags.contains(t.name))
+          .map((t) => t.id)
+          .toSet();
+      setState(() {
+        _allTags = tags;
+        _selectedIds = selectedIds;
+        _loading = false;
+      });
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _error = e.toString();
+          _loading = false;
+        });
+      }
+    }
+  }
+
+  Future<void> _createTag() async {
+    final name = _newTagController.text.trim();
+    if (name.isEmpty) return;
+    setState(() => _creatingTag = true);
+    try {
+      final id = await widget.apiService.createTag(name);
+      if (!mounted) return;
+      final newTag = TagDto(id: id, name: name);
+      setState(() {
+        _allTags = [...(_allTags ?? []), newTag];
+        _selectedIds = {..._selectedIds, id};
+        _newTagController.clear();
+        _creatingTag = false;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _creatingTag = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Failed to create tag: $e'),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    }
+  }
+
+  Future<void> _save() async {
+    setState(() => _saving = true);
+    try {
+      await widget.apiService.setItemTags(
+          widget.item.id, _selectedIds.toList());
+      if (!mounted) return;
+      widget.onSaved();
+      Navigator.of(context).pop();
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _saving = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Failed to save tags: $e'),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Padding(
+      padding: EdgeInsets.only(
+        bottom: MediaQuery.of(context).viewInsets.bottom,
+      ),
+      child: DraggableScrollableSheet(
+        expand: false,
+        initialChildSize: 0.6,
+        minChildSize: 0.4,
+        maxChildSize: 0.9,
+        builder: (ctx, scrollController) => Column(
+          children: [
+            // Handle
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 8),
+              child: Container(
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: theme.colorScheme.onSurface.withValues(alpha: 0.2),
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+            ),
+            // Header
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 4, 8, 8),
+              child: Row(
+                children: [
+                  Text('Edit Tags',
+                      style: theme.textTheme.titleMedium),
+                  const Spacer(),
+                  if (_saving)
+                    const Padding(
+                      padding: EdgeInsets.all(12),
+                      child: SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(strokeWidth: 2)),
+                    )
+                  else
+                    FilledButton(
+                      onPressed: _loading ? null : _save,
+                      child: const Text('Save'),
+                    ),
+                ],
+              ),
+            ),
+            const Divider(height: 1),
+            // Body
+            Expanded(
+              child: _buildBody(theme, scrollController),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildBody(ThemeData theme, ScrollController scrollController) {
+    if (_loading) {
+      return const Center(child: CircularProgressIndicator());
+    }
+    if (_error != null) {
+      return Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(_error!, textAlign: TextAlign.center),
+            const SizedBox(height: 12),
+            FilledButton(onPressed: _loadTags, child: const Text('Retry')),
+          ],
+        ),
+      );
+    }
+    final tags = _allTags ?? [];
+    return ListView(
+      controller: scrollController,
+      padding: const EdgeInsets.all(16),
+      children: [
+        // New tag input
+        Row(
+          children: [
+            Expanded(
+              child: TextField(
+                controller: _newTagController,
+                decoration: const InputDecoration(
+                  labelText: 'New tag name',
+                  border: OutlineInputBorder(),
+                  isDense: true,
+                ),
+                onSubmitted: (_) => _createTag(),
+              ),
+            ),
+            const SizedBox(width: 8),
+            _creatingTag
+                ? const SizedBox(
+                    width: 36,
+                    height: 36,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  )
+                : IconButton.filled(
+                    icon: const Icon(Icons.add),
+                    tooltip: 'Create tag',
+                    onPressed: _createTag,
+                  ),
+          ],
+        ),
+        const SizedBox(height: 16),
+        if (tags.isEmpty)
+          Text('No tags yet. Create one above.',
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
+              ))
+        else
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: tags.map((tag) {
+              final selected = _selectedIds.contains(tag.id);
+              return FilterChip(
+                label: Text(tag.name),
+                selected: selected,
+                onSelected: (val) => setState(() {
+                  if (val) {
+                    _selectedIds = {..._selectedIds, tag.id};
+                  } else {
+                    _selectedIds = _selectedIds
+                        .where((id) => id != tag.id)
+                        .toSet();
+                  }
+                }),
+              );
+            }).toList(),
+          ),
+      ],
+    );
+  }
 }
 
 class _StatusChip extends StatelessWidget {

@@ -5,7 +5,7 @@ plugins {
 }
 
 android {
-    namespace = "com.example.invee_flutter"
+    namespace = "io.szymanski.invee"
     compileSdk = flutter.compileSdkVersion
     ndkVersion = flutter.ndkVersion
 
@@ -16,7 +16,7 @@ android {
 
     defaultConfig {
         // TODO: Specify your own unique Application ID (https://developer.android.com/studio/build/application-id.html).
-        applicationId = "com.example.invee_flutter"
+        applicationId = "io.szymanski.invee"
         // You can update the following values to match your application needs.
         // For more information, see: https://flutter.dev/to/review-gradle-config.
         minSdk = flutter.minSdkVersion

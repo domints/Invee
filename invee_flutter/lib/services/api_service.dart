@@ -3,7 +3,22 @@ import 'package:http/http.dart' as http;
 import '../models/category.dart';
 import '../models/item.dart';
 import '../models/storage.dart';
+import '../models/storage_detail.dart';
 import 'auth_service.dart';
+
+class TagDto {
+  final int id;
+  final String name;
+
+  const TagDto({required this.id, required this.name});
+
+  factory TagDto.fromJson(Map<String, dynamic> json) {
+    return TagDto(
+      id: json['id'] as int,
+      name: json['name'] as String,
+    );
+  }
+}
 
 class ApiException implements Exception {
   final int statusCode;
@@ -74,6 +89,26 @@ class ApiService {
         .timeout(const Duration(seconds: 15));
 
     if (response.statusCode == 200) {
+      return jsonDecode(response.body);
+    }
+    if (response.statusCode == 401) {
+      final redirectHeader = response.headers['oauth-redirect'];
+      throw UnauthorizedException(redirectHeader);
+    }
+    throw ApiException(response.statusCode, response.body);
+  }
+
+  Future<dynamic> _put(String path, Map<String, dynamic> body) async {
+    final response = await http
+        .put(
+          _uri(path),
+          headers: {'Content-Type': 'application/json', ..._authHeaders()},
+          body: jsonEncode(body),
+        )
+        .timeout(const Duration(seconds: 15));
+
+    if (response.statusCode == 200 || response.statusCode == 204) {
+      if (response.body.isEmpty) return null;
       return jsonDecode(response.body);
     }
     if (response.statusCode == 401) {
@@ -201,6 +236,7 @@ class ApiService {
     required int categoryId,
     required int storageId,
     int quantityType = 0,
+    double? quantity,
     DateTime? expiresAt,
   }) async {
     final body = <String, dynamic>{
@@ -209,6 +245,7 @@ class ApiService {
       'storageId': storageId,
       'slug': null,
       'quantityType': quantityType,
+      if (quantity != null) 'quantity': quantity,
       if (expiresAt != null) 'expiresAt': expiresAt.toUtc().toIso8601String(),
     };
     final result = await _post('/api/items/', body);
@@ -239,8 +276,190 @@ class ApiService {
     }
   }
 
+  /// Updates an existing item's fields.
+  Future<void> updateItem({
+    required int id,
+    required String name,
+    required int categoryId,
+    required int storageId,
+    int quantityType = 0,
+    double? quantity,
+    bool broken = false,
+    String? note,
+    String? slug,
+    DateTime? expiresAt,
+  }) async {
+    final body = <String, dynamic>{
+      'id': id,
+      'name': name,
+      'categoryId': categoryId,
+      'storageId': storageId,
+      'slug': slug,
+      'quantityType': quantityType,
+      'quantity': quantity,
+      'broken': broken,
+      'note': note,
+      if (expiresAt != null) 'expiresAt': expiresAt.toUtc().toIso8601String(),
+    };
+    await _put('/api/items/$id', body);
+  }
+
+  /// Returns all tags.
+  Future<List<TagDto>> getTags() async {
+    final data = await _get('/api/tags/') as List<dynamic>;
+    return data.map((t) => TagDto.fromJson(t as Map<String, dynamic>)).toList();
+  }
+
+  /// Creates a new tag and returns its id.
+  Future<int> createTag(String name) async {
+    final result = await _post('/api/tags/', {'name': name});
+    if (result is int) return result;
+    if (result is Map && result['value'] != null) return result['value'] as int;
+    throw ApiException(0, 'Unexpected response from createTag');
+  }
+
+  /// Sets the tags on an item (replaces all existing tags).
+  Future<void> setItemTags(int itemId, List<int> tagIds) async {
+    await _put('/api/items/$itemId/tags', {'tagIds': tagIds});
+  }
+
+  /// Returns all items, optionally filtered by [search] (matches name or tag).
+  Future<List<ItemListEntry>> getAllItems({String? search}) async {
+    final params = <String, String>{};
+    if (search != null && search.isNotEmpty) params['Search'] = search;
+    final data = await _get('/api/items/', params.isEmpty ? null : params)
+        as List<dynamic>;
+    return data
+        .map((i) => ItemListEntry.fromJson(i as Map<String, dynamic>))
+        .toList();
+  }
+
   String imageUrl(String relativeOrAbsolute) {
     if (relativeOrAbsolute.startsWith('http')) return relativeOrAbsolute;
     return '${baseUrl.replaceAll(RegExp(r'/+$'), '')}$relativeOrAbsolute';
+  }
+
+  Future<void> _delete(String path) async {
+    final response = await http
+        .delete(_uri(path), headers: _authHeaders())
+        .timeout(const Duration(seconds: 15));
+    if (response.statusCode == 200 || response.statusCode == 204) return;
+    if (response.statusCode == 401) {
+      throw UnauthorizedException(response.headers['oauth-redirect']);
+    }
+    throw ApiException(response.statusCode, response.body);
+  }
+
+  // ---------------------------------------------------------------------------
+  // Category management
+  // ---------------------------------------------------------------------------
+
+  Future<int> createCategory({required String name, int? parentId}) async {
+    final body = <String, dynamic>{'name': name};
+    if (parentId != null) body['parentId'] = parentId;
+    final result = await _post('/api/categories/', body);
+    if (result is int) return result;
+    if (result is Map && result['value'] != null) return result['value'] as int;
+    throw ApiException(0, 'Unexpected response from createCategory');
+  }
+
+  Future<void> deleteCategory(int id) async {
+    await _delete('/api/categories/$id');
+  }
+
+  Future<void> renameCategory(int id, String name) async {
+    await _put('/api/categories/$id', {'name': name});
+  }
+
+  // ---------------------------------------------------------------------------
+  // Storage management
+  // ---------------------------------------------------------------------------
+
+  /// Returns the raw storage tree (unflattened).
+  Future<List<StorageTreeResponse>> getStorageTree() async {
+    final data = await _get('/api/storages/') as List<dynamic>;
+    return data
+        .map((s) => StorageTreeResponse.fromJson(s as Map<String, dynamic>))
+        .toList();
+  }
+
+  /// Returns a storage's detail view (child storages + items).
+  Future<StorageItemsResponse> getStorageDetail(int id) async {
+    final data = await _get('/api/storages/$id') as Map<String, dynamic>;
+    return StorageItemsResponse.fromJson(data);
+  }
+
+  Future<int> createStorage({
+    required String name,
+    required int storageTypeId,
+    int? parentId,
+    String? slug,
+  }) async {
+    final body = <String, dynamic>{
+      'name': name,
+      'storageTypeId': storageTypeId,
+      if (parentId != null) 'parentId': parentId,
+      if (slug != null) 'slug': slug,
+    };
+    final result = await _post('/api/storages/', body);
+    if (result is int) return result;
+    if (result is Map && result['value'] != null) return result['value'] as int;
+    throw ApiException(0, 'Unexpected response from createStorage');
+  }
+
+  Future<void> deleteStorage(int id) async {
+    await _delete('/api/storages/$id');
+  }
+
+  Future<void> updateStorage(int id, String name, int storageTypeId) async {
+    await _put('/api/storages/$id', {'name': name, 'storageTypeId': storageTypeId});
+  }
+
+  // ---------------------------------------------------------------------------
+  // Storage types
+  // ---------------------------------------------------------------------------
+
+  Future<List<StorageTypeDto>> getStorageTypes() async {
+    final data = await _get('/api/storageTypes/') as List<dynamic>;
+    return data
+        .map((t) => StorageTypeDto.fromJson(t as Map<String, dynamic>))
+        .toList();
+  }
+
+  // ---------------------------------------------------------------------------
+  // Item image upload
+  // ---------------------------------------------------------------------------
+
+  /// Downloads [imageUrl] and uploads it as the item's image.
+  Future<void> uploadItemImageFromUrl(int itemId, String imageUrl) async {
+    final dlResponse = await http
+        .get(Uri.parse(imageUrl))
+        .timeout(const Duration(seconds: 30));
+    if (dlResponse.statusCode != 200) {
+      throw ApiException(dlResponse.statusCode, 'Failed to download image');
+    }
+    final uri = Uri.parse(imageUrl);
+    final filename = uri.pathSegments.isNotEmpty
+        ? uri.pathSegments.last
+        : 'photo.jpg';
+    await uploadItemImageFromBytes(itemId, dlResponse.bodyBytes, filename);
+  }
+
+  /// Uploads raw [bytes] as a multipart image for the given item.
+  Future<void> uploadItemImageFromBytes(
+      int itemId, List<int> bytes, String filename) async {
+    final uri = _uri('/api/items/$itemId/images');
+    final request = http.MultipartRequest('POST', uri)
+      ..headers.addAll(_authHeaders())
+      ..files.add(
+        http.MultipartFile.fromBytes('file', bytes, filename: filename),
+      );
+    final streamed = await request.send().timeout(const Duration(seconds: 60));
+    final response = await http.Response.fromStream(streamed);
+    if (response.statusCode == 200 || response.statusCode == 201) return;
+    if (response.statusCode == 401) {
+      throw UnauthorizedException(response.headers['oauth-redirect']);
+    }
+    throw ApiException(response.statusCode, response.body);
   }
 }

@@ -1,12 +1,14 @@
 import 'dart:async';
+import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import 'screens/auth_screen.dart';
-import 'screens/category_browser_screen.dart';
 import 'screens/create_item_screen.dart';
 import 'screens/item_detail_screen.dart';
+import 'screens/main_shell.dart';
+import 'screens/qr_scanner_screen.dart';
 import 'screens/setup_screen.dart';
 import 'services/api_service.dart';
 import 'services/auth_service.dart';
@@ -56,16 +58,30 @@ class _AppEntry extends StatefulWidget {
 }
 
 class _AppEntryState extends State<_AppEntry> {
-  static const _scannerChannel =
-      EventChannel('com.example.invee_flutter/scanner');
+  static const _scannerChannel = EventChannel('io.szymanski.invee/scanner');
 
   bool _ready = false;
   Widget? _home;
   StreamSubscription<dynamic>? _scanSub;
 
+  /// Whether the setup screen is currently active.
+  bool _isSetup = false;
+
+  /// Non-null api once connected and authenticated.
+  ApiService? _api;
+
+  /// Signals the SetupScreen to fill its URL field with a scanned config URL.
+  final _externalScanUrl = ValueNotifier<String?>(null);
+
   @override
   void initState() {
     super.initState();
+    // Always subscribe to the hardware scanner from the start so the
+    // setup screen can receive config QR codes without needing a connection.
+    _scanSub = _scannerChannel.receiveBroadcastStream().listen(
+      _onScanRaw,
+      onError: (_) {},
+    );
     _init();
   }
 
@@ -75,7 +91,8 @@ class _AppEntryState extends State<_AppEntry> {
 
     if (url == null || url.isEmpty) {
       setState(() {
-        _home = SetupScreen(onConnected: _onConnected);
+        _isSetup = true;
+        _home = _buildSetupScreen();
         _ready = true;
       });
       return;
@@ -83,20 +100,18 @@ class _AppEntryState extends State<_AppEntry> {
 
     final api = ApiService(url);
 
-    // Verify server is reachable
     final health = await api.checkHealth();
     if (!mounted) return;
 
     if (health == null) {
-      // Server unreachable – go back to setup
       setState(() {
-        _home = SetupScreen(onConnected: _onConnected);
+        _isSetup = true;
+        _home = _buildSetupScreen();
         _ready = true;
       });
       return;
     }
 
-    // Check if session is still valid
     final authed = await api.verifyAuth();
     if (!mounted) return;
 
@@ -106,41 +121,86 @@ class _AppEntryState extends State<_AppEntry> {
         _ready = true;
       });
     } else {
-      _startScanListener(api);
+      _api = api;
       setState(() {
-        _home = CategoryBrowserScreen(apiService: api);
+        _isSetup = false;
+        _home = MainShell(apiService: api);
         _ready = true;
       });
     }
   }
 
-  /// Shows the auth screen and, on success, transitions to the main content.
+  Widget _buildSetupScreen() {
+    return SetupScreen(
+      onConnected: _onConnected,
+      externalScanUrl: _externalScanUrl,
+      onScanQr: _openCameraScanner,
+    );
+  }
+
   Widget _buildAuthGate(String url, ApiService api) {
     return AuthScreen(
       baseUrl: url,
       onAuthenticated: () {
         if (!mounted) return;
-        _startScanListener(api);
-        setState(() => _home = CategoryBrowserScreen(apiService: api));
+        _api = api;
+        setState(() {
+          _isSetup = false;
+          _home = MainShell(apiService: api);
+        });
       },
     );
   }
 
   void _onConnected(ApiService api) {
-    _startScanListener(api);
+    _api = api;
+    _isSetup = false;
   }
 
-  void _startScanListener(ApiService api) {
-    _scanSub?.cancel();
-    _scanSub = _scannerChannel.receiveBroadcastStream().listen(
-      (event) => _onScan(api, event),
-      onError: (_) {},
+  /// Central scan handler for both the RK25 hardware scanner and the camera.
+  ///
+  /// Events have the shape `{'data': String, 'codeType': String?}` —
+  /// matching the RK25 EventChannel broadcast and the value returned by
+  /// [QrScannerScreen].
+  void _onScanRaw(dynamic event) {
+    if (event is! Map) return;
+    final data = (event['data'] as String?)?.trim();
+    if (data == null || data.isEmpty) return;
+
+    if (_isSetup) {
+      final url = _tryExtractConfigUrl(data);
+      if (url != null) {
+        _externalScanUrl.value = url;
+      }
+      // Ignore non-config scans while on setup screen.
+      return;
+    }
+
+    final api = _api;
+    if (api != null) _onScan(api, event);
+  }
+
+  /// Tries to parse a config QR payload and returns the server URL, or null.
+  String? _tryExtractConfigUrl(String data) {
+    try {
+      final map = jsonDecode(data) as Map<String, dynamic>;
+      final url = map['url'] as String?;
+      if (url != null && url.isNotEmpty) return url;
+    } catch (_) {}
+    return null;
+  }
+
+  /// Opens the camera QR scanner and feeds the result through [_onScanRaw].
+  Future<void> _openCameraScanner() async {
+    final result = await Navigator.of(_navigatorKey.currentContext!).push<Map>(
+      MaterialPageRoute(builder: (_) => const QrScannerScreen()),
     );
+    if (result != null) _onScanRaw(result);
   }
 
   Future<void> _onScan(ApiService api, dynamic event) async {
     if (event is! Map) return;
-    final contents = event['data'] as String?;
+    final contents = (event['data'] as String?)?.trim();
     final codeType = event['codeType'] as String?;
     if (contents == null || contents.isEmpty) return;
 
@@ -198,6 +258,7 @@ class _AppEntryState extends State<_AppEntry> {
   @override
   void dispose() {
     _scanSub?.cancel();
+    _externalScanUrl.dispose();
     super.dispose();
   }
 

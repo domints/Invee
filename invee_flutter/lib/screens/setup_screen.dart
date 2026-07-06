@@ -2,13 +2,25 @@ import 'package:flutter/material.dart';
 import '../services/api_service.dart';
 import '../services/preferences_service.dart';
 import 'auth_screen.dart';
-import 'category_browser_screen.dart';
+import 'main_shell.dart';
 
 class SetupScreen extends StatefulWidget {
   /// Called with the ready [ApiService] after URL is saved and auth succeeds.
   final void Function(ApiService api)? onConnected;
 
-  const SetupScreen({super.key, this.onConnected});
+  /// When non-null, the setup screen fills the URL field and auto-connects.
+  /// Set by [_AppEntryState] when a config QR is scanned by the hardware scanner.
+  final ValueNotifier<String?>? externalScanUrl;
+
+  /// Opens the camera QR scanner (managed by [_AppEntryState]).
+  final VoidCallback? onScanQr;
+
+  const SetupScreen({
+    super.key,
+    this.onConnected,
+    this.externalScanUrl,
+    this.onScanQr,
+  });
 
   @override
   State<SetupScreen> createState() => _SetupScreenState();
@@ -21,9 +33,25 @@ class _SetupScreenState extends State<SetupScreen> {
   HealthResponse? _health;
 
   @override
+  void initState() {
+    super.initState();
+    widget.externalScanUrl?.addListener(_onExternalScan);
+  }
+
+  @override
   void dispose() {
+    widget.externalScanUrl?.removeListener(_onExternalScan);
     _controller.dispose();
     super.dispose();
+  }
+
+  void _onExternalScan() {
+    final url = widget.externalScanUrl?.value;
+    if (url == null || url.isEmpty) return;
+    // Reset so a second identical scan still triggers.
+    widget.externalScanUrl?.value = null;
+    _controller.text = url;
+    _testAndConnect();
   }
 
   Future<void> _testAndConnect() async {
@@ -68,7 +96,7 @@ class _SetupScreenState extends State<SetupScreen> {
         widget.onConnected?.call(api);
         Navigator.of(context).pushReplacement(
           MaterialPageRoute(
-            builder: (_) => CategoryBrowserScreen(apiService: api),
+            builder: (_) => MainShell(apiService: api),
           ),
         );
       }
@@ -140,7 +168,7 @@ class _SetupScreenState extends State<SetupScreen> {
                     errorText: _error,
                   ),
                 ),
-                const SizedBox(height: 24),
+                const SizedBox(height: 16),
                 FilledButton.icon(
                   onPressed: _testing ? null : _testAndConnect,
                   icon: _testing
@@ -154,6 +182,12 @@ class _SetupScreenState extends State<SetupScreen> {
                         )
                       : const Icon(Icons.cable),
                   label: Text(_testing ? 'Connecting…' : 'Test & Connect'),
+                ),
+                const SizedBox(height: 8),
+                OutlinedButton.icon(
+                  onPressed: _testing ? null : widget.onScanQr,
+                  icon: const Icon(Icons.qr_code_scanner),
+                  label: const Text('Scan QR Code'),
                 ),
                 if (_health != null) ...[
                   const SizedBox(height: 20),
