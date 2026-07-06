@@ -286,8 +286,10 @@ const expiryWarning = inNDays(7);
                 <div class="header-title">
                     <h2>{{ item.name }}</h2>
                     <div class="badges">
-                        <span v-if="activeBorrowing?.status === STATUS_BORROWED" class="badge badge--borrowed">Borrowed</span>
-                        <span v-if="activeBorrowing?.status === STATUS_RESERVED" class="badge badge--reserved">Reserved</span>
+                        <span v-if="activeBorrowing?.status === STATUS_BORROWED"
+                            class="badge badge--borrowed">Borrowed</span>
+                        <span v-if="activeBorrowing?.status === STATUS_RESERVED"
+                            class="badge badge--reserved">Reserved</span>
                         <span v-if="item.broken" class="badge badge--broken">Broken</span>
                     </div>
                 </div>
@@ -295,52 +297,44 @@ const expiryWarning = inNDays(7);
                     <span v-for="tag in item.tags" :key="tag" class="tag">{{ tag }}</span>
                 </div>
             </div>
-            <el-button
-                v-if="userStore.loggedIn"
-                type="primary"
-                plain
-                @click="router.push({ name: 'item-edit', params: { id: itemId } })"
-            >
+            <el-button v-if="userStore.loggedIn" type="primary" plain
+                @click="router.push({ name: 'item-edit', params: { id: itemId } })">
                 Edit
             </el-button>
         </div>
 
         <!-- Info section -->
         <div v-if="images.length" class="item-detail__card">
-            <ImageGallery
-                :images="images"
-                entity-type="item"
-                :entity-id="itemId"
-                :readonly="true"
-            />
+            <ImageGallery :images="images" entity-type="item" :entity-id="itemId" :readonly="true" />
         </div>
 
         <!-- Info section -->
         <div class="item-detail__card">
-            <div class="info-grid">
-                <div class="info-row">
-                    <span class="info-label">Category</span>
-                    <router-link :to="{ name: 'category', params: slugId(item.category) }" class="info-link">
+            <div class="info__grid">
+                <div class="info__row">
+                    <span class="info__label">Category</span>
+                    <router-link :to="{ name: 'category', params: slugId(item.category) }" class="info__link">
                         {{ item.category.name }}
                     </router-link>
                 </div>
-                <div v-if="userStore.loggedIn" class="info-row">
-                    <span class="info-label">Storage</span>
-                    <router-link :to="{ name: 'storage', params: slugId(item.storage) }" class="info-link">
+                <div v-if="userStore.loggedIn" class="info__row">
+                    <span class="info__label">Storage</span>
+                    <router-link :to="{ name: 'storage', params: slugId(item.storage) }" class="info__link">
                         {{ item.storage.name }}
                     </router-link>
                 </div>
-                <div v-if="item.note" class="info-row info-row--note">
-                    <span class="info-label">Note</span>
-                    <span class="info-value note-text">{{ item.note }}</span>
+                <div v-if="item.note" class="info__row info__row--note">
+                    <span class="info__label">Note</span>
+                    <span class="info__value note-text">{{ item.note }}</span>
                 </div>
-                <div class="info-row">
-                    <span class="info-label">Added</span>
-                    <span class="info-value">{{ item.addedAt ? formatDate(item.addedAt) : '—' }}</span>
+                <div class="info__row">
+                    <span class="info__label">Added</span>
+                    <span class="info__value">{{ item.addedAt ? formatDate(item.addedAt) : '—' }}</span>
                 </div>
-                <div v-if="item.expiresAt" class="info-row">
-                    <span class="info-label">Expires</span>
-                    <span :class="['info-value', new Date(item.expiresAt) < new Date() ? 'expiry--expired' : (new Date(item.expiresAt) < expiryWarning ? 'expiry-warning' : 'expiry--ok')]">
+                <div v-if="item.expiresAt" class="info__row">
+                    <span class="info__label">Expires</span>
+                    <span
+                        :class="['info__value', new Date(item.expiresAt) < new Date() ? 'expiry--expired' : (new Date(item.expiresAt) < expiryWarning ? 'expiry--warning' : 'expiry--ok')]">
                         {{ formatDate(item.expiresAt) }}
                     </span>
                 </div>
@@ -359,28 +353,17 @@ const expiryWarning = inNDays(7);
 
             <!-- Precise quantity controls (auth) -->
             <div v-else-if="item.quantityType === 2" class="quantity-controls">
-                <el-button
-                    :disabled="(item.quantity ?? 0) <= 0 || quantityLoading"
-                    @click="onPreciseAdjust(-1)"
-                    circle
-                >−</el-button>
+                <el-button :disabled="(item.quantity ?? 0) <= 0 || quantityLoading" @click="onPreciseAdjust(-1)"
+                    circle>−</el-button>
                 <span class="quantity-value">× {{ item.quantity ?? 0 }}</span>
-                <el-button
-                    :disabled="quantityLoading"
-                    @click="onPreciseAdjust(1)"
-                    circle
-                >+</el-button>
+                <el-button :disabled="quantityLoading" @click="onPreciseAdjust(1)" circle>+</el-button>
             </div>
 
             <!-- Level controls (auth) -->
             <div v-else-if="item.quantityType === 1" class="level-controls">
-                <el-button
-                    v-for="(label, val) in levelLabels"
-                    :key="val"
-                    :type="item.level === Number(val) ? 'primary' : 'default'"
-                    :disabled="quantityLoading"
-                    @click="onLevelChange(Number(val))"
-                >{{ label }}</el-button>
+                <el-button v-for="(label, val) in levelLabels" :key="val"
+                    :type="item.level === Number(val) ? 'primary' : 'default'" :disabled="quantityLoading"
+                    @click="onLevelChange(Number(val))">{{ label }}</el-button>
             </div>
         </div>
 
@@ -409,21 +392,13 @@ const expiryWarning = inNDays(7);
                     </div>
                     <div class="form-field">
                         <label>Expected start</label>
-                        <el-date-picker
-                            v-model="reserveForm.expectedStart"
-                            type="datetime"
-                            placeholder="Pick date & time"
-                            style="width: 100%"
-                        />
+                        <el-date-picker v-model="reserveForm.expectedStart" type="datetime"
+                            placeholder="Pick date & time" style="width: 100%" />
                     </div>
                     <div class="form-field">
                         <label>Expected return</label>
-                        <el-date-picker
-                            v-model="reserveForm.expectedReturn"
-                            type="datetime"
-                            placeholder="Pick date & time"
-                            style="width: 100%"
-                        />
+                        <el-date-picker v-model="reserveForm.expectedReturn" type="datetime"
+                            placeholder="Pick date & time" style="width: 100%" />
                     </div>
                     <div class="form-field">
                         <label>Comment</label>
@@ -433,7 +408,8 @@ const expiryWarning = inNDays(7);
                         <label>Incomplete</label>
                         <el-switch v-model="reserveForm.incomplete" />
                     </div>
-                    <el-button type="primary" :loading="reserveLoading" @click="submitReserve">Confirm Reservation</el-button>
+                    <el-button type="primary" :loading="reserveLoading" @click="submitReserve">Confirm
+                        Reservation</el-button>
                 </div>
 
                 <!-- Borrow form -->
@@ -445,12 +421,8 @@ const expiryWarning = inNDays(7);
                     </div>
                     <div class="form-field">
                         <label>Expected return</label>
-                        <el-date-picker
-                            v-model="borrowForm.expectedReturn"
-                            type="datetime"
-                            placeholder="Pick date & time"
-                            style="width: 100%"
-                        />
+                        <el-date-picker v-model="borrowForm.expectedReturn" type="datetime"
+                            placeholder="Pick date & time" style="width: 100%" />
                     </div>
                     <div class="form-field">
                         <label>Comment</label>
@@ -472,13 +444,16 @@ const expiryWarning = inNDays(7);
                         <span><strong>Borrower:</strong> {{ activeBorrowing.borrower }}</span>
                         <span><strong>Start:</strong> {{ formatDate(activeBorrowing.start) }}</span>
                         <span><strong>Return by:</strong> {{ formatDate(activeBorrowing.end) }}</span>
-                        <span v-if="activeBorrowing.comment"><strong>Comment:</strong> {{ activeBorrowing.comment }}</span>
+                        <span v-if="activeBorrowing.comment"><strong>Comment:</strong> {{ activeBorrowing.comment
+                            }}</span>
                         <span v-if="activeBorrowing.incomplete" class="incomplete-note">⚠ Incomplete</span>
                     </div>
                 </div>
                 <div class="borrow-actions">
-                    <el-button type="primary" :loading="convertLoading" @click="onConvertToBorrow">Convert to Borrow</el-button>
-                    <el-button type="danger" plain :loading="cancelLoading" @click="onCancelReservation">Cancel Reservation</el-button>
+                    <el-button type="primary" :loading="convertLoading" @click="onConvertToBorrow">Convert to
+                        Borrow</el-button>
+                    <el-button type="danger" plain :loading="cancelLoading" @click="onCancelReservation">Cancel
+                        Reservation</el-button>
                 </div>
             </template>
 
@@ -490,7 +465,8 @@ const expiryWarning = inNDays(7);
                         <span><strong>Borrower:</strong> {{ activeBorrowing.borrower }}</span>
                         <span><strong>Since:</strong> {{ formatDate(activeBorrowing.start) }}</span>
                         <span><strong>Return by:</strong> {{ formatDate(activeBorrowing.end) }}</span>
-                        <span v-if="activeBorrowing.comment"><strong>Comment:</strong> {{ activeBorrowing.comment }}</span>
+                        <span v-if="activeBorrowing.comment"><strong>Comment:</strong> {{ activeBorrowing.comment
+                            }}</span>
                         <span v-if="activeBorrowing.incomplete" class="incomplete-note">⚠ Incomplete</span>
                     </div>
                 </div>
@@ -518,7 +494,8 @@ const expiryWarning = inNDays(7);
                         <td>{{ formatDate(b.start) }}</td>
                         <td>{{ formatDate(b.end) }}</td>
                         <td>
-                            <span :class="['badge', b.status === STATUS_RETURNED ? 'badge--returned' : 'badge--cancelled']">
+                            <span
+                                :class="['badge', b.status === STATUS_RETURNED ? 'badge--returned' : 'badge--cancelled']">
                                 {{ borrowingStatusText(b.status) }}
                             </span>
                         </td>
@@ -637,59 +614,63 @@ const expiryWarning = inNDays(7);
     }
 }
 
-// Info grid
-.info-grid {
-    display: flex;
-    flex-direction: column;
-    gap: 0.5rem;
-}
+.info {
+    &__grid {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+    }
 
-.info-row {
-    display: flex;
-    align-items: baseline;
-    gap: 0.75rem;
+    &__row {
+        display: flex;
+        align-items: baseline;
+        gap: 0.75rem;
 
-    &--note {
-        align-items: flex-start;
+        &--note {
+            align-items: flex-start;
+        }
+    }
+
+    &__label {
+        min-width: 80px;
+        font-size: 0.8rem;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        color: var(--el-text-color-secondary);
+        font-weight: 600;
+        flex-shrink: 0;
+    }
+
+    &__link {
+        color: var(--el-color-primary);
+        text-decoration: none;
+
+        &:hover {
+            text-decoration: underline;
+        }
     }
 }
 
-.info-label {
-    min-width: 80px;
-    font-size: 0.8rem;
-    text-transform: uppercase;
-    letter-spacing: 0.04em;
-    color: var(--el-text-color-secondary);
-    font-weight: 600;
-    flex-shrink: 0;
-}
-
-.info-link {
-    color: var(--el-color-primary);
-    text-decoration: none;
-
-    &:hover {
-        text-decoration: underline;
-    }
-}
 
 .note-text {
     white-space: pre-wrap;
     line-height: 1.5;
 }
 
-.expiry--expired {
-    color: var(--el-color-danger);
-    font-weight: 500;
-}
+.expiry {
+    &--ok {
+        color: var(--el-color-success-dark-2);
+    }
 
-.expiry--warning {
-    color: var(--el-color-warning-light-7);
-    font-weight: 500;
-}
+    &--expired {
+        color: var(--el-color-danger);
+        font-weight: 800;
+    }
 
-.expiry--ok {
-    color: var(--el-color-success-dark-2);
+    &--warning {
+        color: var(--el-color-warning-light-7);
+        font-weight: 700;
+    }
 }
 
 // Quantity
@@ -793,7 +774,8 @@ const expiryWarning = inNDays(7);
     border-collapse: collapse;
     font-size: 0.875rem;
 
-    th, td {
+    th,
+    td {
         text-align: left;
         padding: 0.5rem 0.75rem;
     }
