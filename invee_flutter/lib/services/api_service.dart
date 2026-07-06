@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import '../models/category.dart';
 import '../models/item.dart';
+import '../models/storage.dart';
 import 'auth_service.dart';
 
 class ApiException implements Exception {
@@ -82,6 +83,26 @@ class ApiService {
     throw ApiException(response.statusCode, response.body);
   }
 
+  Future<dynamic> _post(String path, Map<String, dynamic> body) async {
+    final response = await http
+        .post(
+          _uri(path),
+          headers: {'Content-Type': 'application/json', ..._authHeaders()},
+          body: jsonEncode(body),
+        )
+        .timeout(const Duration(seconds: 15));
+
+    if (response.statusCode == 200 || response.statusCode == 201) {
+      if (response.body.isEmpty) return null;
+      return jsonDecode(response.body);
+    }
+    if (response.statusCode == 401) {
+      final redirectHeader = response.headers['oauth-redirect'];
+      throw UnauthorizedException(redirectHeader);
+    }
+    throw ApiException(response.statusCode, response.body);
+  }
+
   /// Calls `/api/health` and returns the parsed response, or null if the
   /// server is unreachable or returns an unexpected error.
   Future<HealthResponse?> checkHealth() async {
@@ -148,6 +169,70 @@ class ApiService {
       if (data is int) return data;
       if (data is Map && data['value'] != null) return data['value'] as int?;
       return null;
+    } on ApiException catch (e) {
+      if (e.statusCode == 404) return null;
+      rethrow;
+    }
+  }
+
+  /// Returns a flat list of all storages (tree flattened depth-first).
+  Future<List<StorageEntry>> getStorages() async {
+    final data = await _get('/api/storages/') as List<dynamic>;
+    final tree = data
+        .map((s) => StorageTreeResponse.fromJson(s as Map<String, dynamic>))
+        .toList();
+    final flat = <StorageEntry>[];
+    void flatten(StorageTreeResponse node, String prefix) {
+      final label = prefix.isEmpty ? node.name : '$prefix / ${node.name}';
+      flat.add(StorageEntry(id: node.id, name: node.name, displayName: label));
+      for (final child in node.children) {
+        flatten(child, label);
+      }
+    }
+    for (final root in tree) {
+      flatten(root, '');
+    }
+    return flat;
+  }
+
+  /// Creates a new item and returns its id.
+  Future<int> createItem({
+    required String name,
+    required int categoryId,
+    required int storageId,
+    int quantityType = 0,
+    DateTime? expiresAt,
+  }) async {
+    final body = <String, dynamic>{
+      'name': name,
+      'categoryId': categoryId,
+      'storageId': storageId,
+      'slug': null,
+      'quantityType': quantityType,
+      if (expiresAt != null) 'expiresAt': expiresAt.toUtc().toIso8601String(),
+    };
+    final result = await _post('/api/items/', body);
+    if (result is int) return result;
+    if (result is Map && result['value'] != null) return result['value'] as int;
+    throw ApiException(0, 'Unexpected response from createItem');
+  }
+
+  /// Adds a barcode code to an existing item.
+  Future<void> addItemCode(int itemId, int codeType, String contents) async {
+    await _post('/api/items/$itemId/codes', {
+      'codeType': codeType,
+      'contents': contents,
+    });
+  }
+
+  /// Looks up a product by barcode via the Open Food Facts proxy.
+  /// Returns null when not found (404).
+  Future<ExternalProductLookupResult?> lookupProductByBarcode(
+      String barcode) async {
+    try {
+      final data =
+          await _get('/api/products/barcode/$barcode') as Map<String, dynamic>;
+      return ExternalProductLookupResult.fromJson(data);
     } on ApiException catch (e) {
       if (e.statusCode == 404) return null;
       rethrow;

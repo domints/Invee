@@ -95,6 +95,7 @@ namespace Invee.Api.Endpoints
             group.MapGroup("/storages").MapStorages();
             group.MapGroup("/items").MapItems();
             group.MapGroup("/images").MapImages();
+            group.MapGroup("/products").MapProducts();
 
             return group;
         }

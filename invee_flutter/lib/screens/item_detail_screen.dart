@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../models/barcode_type.dart';
 import '../models/item.dart';
 import '../services/api_service.dart';
 
@@ -463,21 +464,7 @@ class _ItemDetailView extends StatelessWidget {
     return '${dt.year}-${dt.month.toString().padLeft(2, '0')}-${dt.day.toString().padLeft(2, '0')}';
   }
 
-  String _codeTypeName(String raw) {
-    const names = {
-      '0': 'QR',
-      '1': 'EAN-13',
-      '2': 'EAN-8',
-      '3': 'UPC-A',
-      '4': 'Code128',
-      '5': 'Code39',
-      '6': 'DataMatrix',
-      '7': 'PDF417',
-      '8': 'Aztec',
-      '9': 'ITF-14',
-    };
-    return names[raw] ?? raw;
-  }
+  String _codeTypeName(String raw) => BarcodeType.displayName(raw);
 }
 
 class _InfoRow {

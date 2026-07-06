@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../models/item.dart';
 import '../services/api_service.dart';
+import 'create_item_screen.dart';
 import 'item_detail_screen.dart';
 
 class ItemListScreen extends StatefulWidget {
@@ -56,12 +57,31 @@ class _ItemListScreenState extends State<ItemListScreen> {
     );
   }
 
+  void _openCreate() {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => CreateItemScreen(
+          apiService: widget.apiService,
+          prefillCategoryId: widget.categoryId,
+          prefillCategoryName: widget.categoryName,
+        ),
+      ),
+    ).then((_) => _loadItems());
+  }
+
   @override
   Widget build(BuildContext context) {
+    final isIOS = Theme.of(context).platform == TargetPlatform.iOS;
     return Scaffold(
       appBar: AppBar(
         title: Text(widget.categoryName),
         actions: [
+          if (isIOS)
+            IconButton(
+              icon: const Icon(Icons.add),
+              tooltip: 'Add item',
+              onPressed: _openCreate,
+            ),
           IconButton(
             icon: const Icon(Icons.refresh),
             tooltip: 'Refresh',
@@ -69,6 +89,13 @@ class _ItemListScreenState extends State<ItemListScreen> {
           ),
         ],
       ),
+      floatingActionButton: isIOS
+          ? null
+          : FloatingActionButton(
+              onPressed: _openCreate,
+              tooltip: 'Add item',
+              child: const Icon(Icons.add),
+            ),
       body: _buildBody(),
     );
   }

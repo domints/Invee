@@ -5,6 +5,7 @@ import 'package:flutter/services.dart';
 
 import 'screens/auth_screen.dart';
 import 'screens/category_browser_screen.dart';
+import 'screens/create_item_screen.dart';
 import 'screens/item_detail_screen.dart';
 import 'screens/setup_screen.dart';
 import 'services/api_service.dart';
@@ -146,7 +147,7 @@ class _AppEntryState extends State<_AppEntry> {
     try {
       final itemId = await api.lookupByCode(contents, codeType: codeType);
       if (itemId == null) {
-        _showScanNotFound(contents);
+        _showScanNotFound(api, contents, codeType);
         return;
       }
       _navigatorKey.currentState?.push(
@@ -155,18 +156,41 @@ class _AppEntryState extends State<_AppEntry> {
         ),
       );
     } catch (_) {
-      _showScanNotFound(contents);
+      _showScanNotFound(api, contents, codeType);
     }
   }
 
-  void _showScanNotFound(String contents) {
+  void _showScanNotFound(ApiService api, String contents, String? codeType) {
     final ctx = _navigatorKey.currentContext;
     if (ctx == null) return;
-    ScaffoldMessenger.of(ctx).showSnackBar(
-      SnackBar(
-        content: Text('No item found for barcode: $contents'),
-        behavior: SnackBarBehavior.floating,
-        duration: const Duration(seconds: 3),
+    showDialog<void>(
+      context: ctx,
+      builder: (dialogCtx) => AlertDialog(
+        title: const Text('Barcode not recognized'),
+        content: Text(
+          'No item found for barcode:\n$contents\n\nWould you like to create a new item with this barcode?',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogCtx).pop(),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () {
+              Navigator.of(dialogCtx).pop();
+              _navigatorKey.currentState?.push(
+                MaterialPageRoute(
+                  builder: (_) => CreateItemScreen(
+                    apiService: api,
+                    prefillBarcode: contents,
+                    prefillCodeType: codeType,
+                  ),
+                ),
+              );
+            },
+            child: const Text('Create'),
+          ),
+        ],
       ),
     );
   }

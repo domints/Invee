@@ -63,6 +63,46 @@ namespace Invee.Migrations.Sqlite.Migrations
                     b.ToTable("Borrowings");
                 });
 
+            modelBuilder.Entity("Invee.Data.Database.Model.CachedProduct", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Barcode")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime>("CachedAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("DataSource")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("FrontImageUrl")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("ProductName")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("RawJson")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Tags")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Barcode")
+                        .IsUnique();
+
+                    b.ToTable("CachedProducts");
+                });
+
             modelBuilder.Entity("Invee.Data.Database.Model.Category", b =>
                 {
                     b.Property<int>("Id")

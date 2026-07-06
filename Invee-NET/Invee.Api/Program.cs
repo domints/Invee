@@ -152,6 +152,12 @@ switch (dbType)
         throw new NotSupportedException($"Database type <{dbType}> is not supported (yet?).");
 }
 
+builder.Services.AddHttpClient("OpenFoodFacts", client =>
+{
+    client.BaseAddress = new Uri("https://world.openfoodfacts.org/");
+    client.DefaultRequestHeaders.Add("User-Agent", "Invee/1.0");
+});
+
 var app = builder.Build();
 
 using (var scope = app.Services.CreateScope())
