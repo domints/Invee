@@ -248,7 +248,7 @@ const save = async () => {
 <template>
     <div class="item-edit">
         <div class="item-edit__header">
-            <el-button @click="router.push({ name: 'item', params: { id: itemId } })">← Back</el-button>
+            <el-button @click="router.back()">← Back</el-button>
             <h2>{{ form.name || 'Edit item' }}</h2>
         </div>
 

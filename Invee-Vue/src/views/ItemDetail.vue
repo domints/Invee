@@ -268,6 +268,13 @@ const borrowingStatusText = (status: number | undefined) => {
 };
 
 const levelLabels: Record<number, string> = { 0: 'None', 1: 'Low', 2: 'Good' };
+
+const inNDays = (ndays: number): Date => {
+    let date = new Date();
+    date.setDate(date.getDate() + ndays);
+    return date;
+}
+const expiryWarning = inNDays(7);
 </script>
 
 <template>
@@ -333,7 +340,7 @@ const levelLabels: Record<number, string> = { 0: 'None', 1: 'Low', 2: 'Good' };
                 </div>
                 <div v-if="item.expiresAt" class="info-row">
                     <span class="info-label">Expires</span>
-                    <span :class="['info-value', new Date(item.expiresAt) < new Date() ? 'expiry--expired' : 'expiry--ok']">
+                    <span :class="['info-value', new Date(item.expiresAt) < new Date() ? 'expiry--expired' : (new Date(item.expiresAt) < expiryWarning ? 'expiry-warning' : 'expiry--ok')]">
                         {{ formatDate(item.expiresAt) }}
                     </span>
                 </div>
@@ -673,6 +680,11 @@ const levelLabels: Record<number, string> = { 0: 'None', 1: 'Low', 2: 'Good' };
 
 .expiry--expired {
     color: var(--el-color-danger);
+    font-weight: 500;
+}
+
+.expiry--warning {
+    color: var(--el-color-warning-light-7);
     font-weight: 500;
 }
 
