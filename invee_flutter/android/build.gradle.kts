@@ -3,6 +3,18 @@ allprojects {
         google()
         mavenCentral()
     }
+
+    // Ensure all subprojects (including Flutter plugins) use the same KGP version
+    // declared in settings.gradle.kts, avoiding version conflicts when a plugin
+    // such as mobile_scanner applies KGP in its own build script.
+    configurations.all {
+        resolutionStrategy.eachDependency {
+            if (requested.group == "org.jetbrains.kotlin" && requested.name.startsWith("kotlin-")) {
+                useVersion("2.3.20")
+                because("Align all Kotlin artefacts to the version declared in settings.gradle.kts")
+            }
+        }
+    }
 }
 
 val newBuildDir: Directory =

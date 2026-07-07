@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../services/api_service.dart';
+import '../utils.dart';
 import '../widgets/entity_picker_modal.dart';
 
 /// Form screen to create a new category.
@@ -94,9 +95,11 @@ class _AddCategoryScreenState extends State<AddCategoryScreen> {
     if (!_formKey.currentState!.validate()) return;
     setState(() => _saving = true);
     try {
+      final catName = _nameController.text.trim();
       await widget.apiService.createCategory(
-        name: _nameController.text.trim(),
+        name: catName,
         parentId: _selectedParent?.id,
+        slug: slugify(catName),
       );
       if (mounted) Navigator.of(context).pop(true);
     } catch (e) {

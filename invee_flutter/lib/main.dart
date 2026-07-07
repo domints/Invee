@@ -1,9 +1,11 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:developer' as dev;
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+import 'models/barcode_type.dart';
 import 'screens/auth_screen.dart';
 import 'screens/create_item_screen.dart';
 import 'screens/item_detail_screen.dart';
@@ -203,6 +205,12 @@ class _AppEntryState extends State<_AppEntry> {
     final contents = (event['data'] as String?)?.trim();
     final codeType = event['codeType'] as String?;
     if (contents == null || contents.isEmpty) return;
+
+    final apiInt = BarcodeType.fromCipherlab(codeType);
+    dev.log(
+      '[scan] barcode="$contents"  codeType="$codeType"  → apiInt=$apiInt',
+      name: 'BarcodeType',
+    );
 
     try {
       final itemId = await api.lookupByCode(contents, codeType: codeType);

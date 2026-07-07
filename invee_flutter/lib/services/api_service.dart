@@ -238,12 +238,13 @@ class ApiService {
     int quantityType = 0,
     double? quantity,
     DateTime? expiresAt,
+    String? slug,
   }) async {
     final body = <String, dynamic>{
       'name': name,
       'categoryId': categoryId,
       'storageId': storageId,
-      'slug': null,
+      'slug': slug,
       'quantityType': quantityType,
       if (quantity != null) 'quantity': quantity,
       if (expiresAt != null) 'expiresAt': expiresAt.toUtc().toIso8601String(),
@@ -260,6 +261,16 @@ class ApiService {
       'codeType': codeType,
       'contents': contents,
     });
+  }
+
+  /// Deletes a barcode code from an item.
+  Future<void> deleteItemCode(int itemId, int codeId) async {
+    await _delete('/api/items/$itemId/codes/$codeId');
+  }
+
+  /// Deletes an image from an item.
+  Future<void> deleteItemImage(int itemId, int imageId) async {
+    await _delete('/api/items/$itemId/images/$imageId');
   }
 
   /// Looks up a product by barcode via the Open Food Facts proxy.
@@ -354,9 +365,14 @@ class ApiService {
   // Category management
   // ---------------------------------------------------------------------------
 
-  Future<int> createCategory({required String name, int? parentId}) async {
+  Future<int> createCategory({
+    required String name,
+    int? parentId,
+    String? slug,
+  }) async {
     final body = <String, dynamic>{'name': name};
     if (parentId != null) body['parentId'] = parentId;
+    if (slug != null) body['slug'] = slug;
     final result = await _post('/api/categories/', body);
     if (result is int) return result;
     if (result is Map && result['value'] != null) return result['value'] as int;
@@ -461,5 +477,32 @@ class ApiService {
       throw UnauthorizedException(response.headers['oauth-redirect']);
     }
     throw ApiException(response.statusCode, response.body);
+  }
+
+  // ---------------------------------------------------------------------------
+  // Storage image upload / delete
+  // ---------------------------------------------------------------------------
+
+  /// Uploads raw [bytes] as a multipart image for the given storage.
+  Future<void> uploadStorageImageFromBytes(
+      int storageId, List<int> bytes, String filename) async {
+    final uri = _uri('/api/storages/$storageId/images');
+    final request = http.MultipartRequest('POST', uri)
+      ..headers.addAll(_authHeaders())
+      ..files.add(
+        http.MultipartFile.fromBytes('file', bytes, filename: filename),
+      );
+    final streamed = await request.send().timeout(const Duration(seconds: 60));
+    final response = await http.Response.fromStream(streamed);
+    if (response.statusCode == 200 || response.statusCode == 201) return;
+    if (response.statusCode == 401) {
+      throw UnauthorizedException(response.headers['oauth-redirect']);
+    }
+    throw ApiException(response.statusCode, response.body);
+  }
+
+  /// Deletes an image from a storage.
+  Future<void> deleteStorageImage(int storageId, int imageId) async {
+    await _delete('/api/storages/$storageId/images/$imageId');
   }
 }

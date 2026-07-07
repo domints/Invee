@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
+import '../models/item.dart' show ImageDto;
 import '../models/storage_detail.dart';
 import '../services/api_service.dart';
 import '../widgets/speed_dial_fab.dart';
@@ -151,6 +153,86 @@ class _StorageDetailScreenState extends State<StorageDetailScreen> {
     }
   }
 
+  Future<void> _uploadImage() async {
+    final messenger = ScaffoldMessenger.of(context);
+    final picker = ImagePicker();
+    final source = await showModalBottomSheet<ImageSource>(
+      context: context,
+      builder: (ctx) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              leading: const Icon(Icons.camera_alt_outlined),
+              title: const Text('Camera'),
+              onTap: () => Navigator.of(ctx).pop(ImageSource.camera),
+            ),
+            ListTile(
+              leading: const Icon(Icons.photo_library_outlined),
+              title: const Text('Photo library'),
+              onTap: () => Navigator.of(ctx).pop(ImageSource.gallery),
+            ),
+          ],
+        ),
+      ),
+    );
+    if (source == null || !mounted) return;
+    final file = await picker.pickImage(source: source, imageQuality: 85);
+    if (file == null || !mounted) return;
+    try {
+      final bytes = await file.readAsBytes();
+      await widget.apiService.uploadStorageImageFromBytes(
+          widget.storageId, bytes, file.name);
+      if (mounted) _load();
+    } catch (e) {
+      if (!mounted) return;
+      messenger.showSnackBar(
+        SnackBar(
+          content: Text('Failed to upload image: $e'),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    }
+  }
+
+  Future<void> _deleteImage(int imageId) async {
+    final messenger = ScaffoldMessenger.of(context);
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Delete Image'),
+        content: const Text('Remove this image from the storage?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(false),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            style: FilledButton.styleFrom(
+              backgroundColor: Theme.of(ctx).colorScheme.error,
+              foregroundColor: Theme.of(ctx).colorScheme.onError,
+            ),
+            onPressed: () => Navigator.of(ctx).pop(true),
+            child: const Text('Delete'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true || !mounted) return;
+    try {
+      await widget.apiService.deleteStorageImage(widget.storageId, imageId);
+      if (mounted) _load();
+    } catch (e) {
+      if (!mounted) return;
+      messenger.showSnackBar(
+        SnackBar(
+          content: Text('Failed to delete image: $e'),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    }
+  }
+
   void _openAddSubStorage() async {
     final created = await Navigator.of(context).push<bool>(
       MaterialPageRoute(
@@ -218,6 +300,11 @@ class _StorageDetailScreenState extends State<StorageDetailScreen> {
           title: Text(_currentName),
           actions: [
             IconButton(
+              icon: const Icon(Icons.add_photo_alternate_outlined),
+              tooltip: 'Upload photo',
+              onPressed: _loading ? null : _uploadImage,
+            ),
+            IconButton(
               icon: const Icon(Icons.drive_file_rename_outline),
               tooltip: 'Rename',
               onPressed: _renameStorage,
@@ -283,7 +370,11 @@ class _StorageDetailScreenState extends State<StorageDetailScreen> {
     final detail = _detail;
     if (detail == null) return const SizedBox();
 
-    if (detail.childStorages.isEmpty && detail.items.isEmpty) {
+    final hasContent = detail.childStorages.isNotEmpty ||
+        detail.items.isNotEmpty ||
+        detail.images.isNotEmpty;
+
+    if (!hasContent) {
       return Center(
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -295,8 +386,7 @@ class _StorageDetailScreenState extends State<StorageDetailScreen> {
             const SizedBox(height: 4),
             Text(
               'Use + to add an item or sub-storage.',
-              style:
-                  TextStyle(color: Colors.grey.shade500, fontSize: 12),
+              style: TextStyle(color: Colors.grey.shade500, fontSize: 12),
             ),
           ],
         ),
@@ -307,6 +397,12 @@ class _StorageDetailScreenState extends State<StorageDetailScreen> {
       onRefresh: _load,
       child: ListView(
         children: [
+          if (detail.images.isNotEmpty)
+            _StorageImageGallery(
+              images: detail.images,
+              apiService: widget.apiService,
+              onDelete: _deleteImage,
+            ),
           if (detail.childStorages.isNotEmpty) ...[
             _SectionHeader(
               icon: Icons.warehouse_outlined,
@@ -335,6 +431,70 @@ class _StorageDetailScreenState extends State<StorageDetailScreen> {
           ],
           const SizedBox(height: 80),
         ],
+      ),
+    );
+  }
+}
+
+class _StorageImageGallery extends StatelessWidget {
+  final List<ImageDto> images;
+  final ApiService apiService;
+  final void Function(int imageId) onDelete;
+
+  const _StorageImageGallery({
+    required this.images,
+    required this.apiService,
+    required this.onDelete,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      height: 220,
+      child: PageView.builder(
+        itemCount: images.length,
+        itemBuilder: (ctx, i) {
+          final img = images[i];
+          final url = apiService.imageUrl(img.url);
+          return Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+            child: Stack(
+              children: [
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(12),
+                  child: Image.network(
+                    url,
+                    width: double.infinity,
+                    height: double.infinity,
+                    fit: BoxFit.cover,
+                    errorBuilder: (_, _, _) => const Center(
+                      child: Icon(Icons.broken_image_outlined,
+                          size: 48, color: Colors.grey),
+                    ),
+                    loadingBuilder: (_, child, progress) {
+                      if (progress == null) return child;
+                      return const Center(child: CircularProgressIndicator());
+                    },
+                  ),
+                ),
+                Positioned(
+                  top: 6,
+                  right: 6,
+                  child: Material(
+                    color: Colors.black54,
+                    borderRadius: BorderRadius.circular(20),
+                    child: IconButton(
+                      icon: const Icon(Icons.delete_outline,
+                          color: Colors.white, size: 20),
+                      tooltip: 'Delete image',
+                      onPressed: () => onDelete(img.id),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          );
+        },
       ),
     );
   }

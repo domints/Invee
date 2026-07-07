@@ -14,29 +14,32 @@ class BarcodeType {
 
   static const _cipherlabToApi = <String, int>{
     'QR Code': 0,
-    'MicroQR': 0,
-    'EAN-13': 1,
-    'EAN-13 with Addon 2': 1,
-    'EAN-13 with Addon 5': 1,
+    'Micro QR Code': 0,
+    'EAN13': 1,
+    'EAN13 with Addon 2': 1,
+    'EAN13 with Addon 5': 1,
     'Bookland (EAN)': 1,
-    'EAN-8': 2,
-    'EAN-8 with Addon 2': 2,
-    'EAN-8 with Addon 5': 2,
-    'UPC-A': 3,
-    'UPC-A with Addon 2': 3,
-    'UPC-A with Addon 5': 3,
+    'EAN-13': 1, // camera scanner alias
+    'EAN8': 2,
+    'EAN8 with Addon 2': 2,
+    'EAN8 with Addon 5': 2,
+    'EAN-8': 2, // camera scanner alias
+    'UPC A': 3,
+    'UPC A with Addon 2': 3,
+    'UPC A with Addon 5': 3,
+    'UPC-A': 3, // camera scanner alias
     'Code 128': 4,
-    'GS1-128 (EAN-128)': 4,
-    'ISBT 128': 4,
-    'ISBT 128 Concatenation': 4,
+    'GS1-128 (EAN 128)': 4,
+    'ISBT 128': 10,
+    'ISBT 128 Concatenation': 10,
     'Code 39': 5,
-    'Code 39 Full ASCII': 5,
     'Trioptic (Code 39)': 5,
     'Data Matrix': 6,
     'PDF417': 7,
     'MicroPDF417': 7,
     'Aztec': 8,
-    'Interleaved 25': 9,
+    'Interleaved 2 of 5': 9,
+    'Interleaved 25': 9, // camera scanner alias
   };
 
   // ---------------------------------------------------------------------------
@@ -45,19 +48,12 @@ class BarcodeType {
   // ---------------------------------------------------------------------------
 
   static const _offTypes = <String>{
-    'EAN-13',
-    'EAN-13 with Addon 2',
-    'EAN-13 with Addon 5',
-    'EAN-8',
-    'EAN-8 with Addon 2',
-    'EAN-8 with Addon 5',
-    'UPC-A',
-    'UPC-A with Addon 2',
-    'UPC-A with Addon 5',
+    'EAN13',
+    'EAN8',
+    'UPC A',
     'Code 128',
-    'GS1-128 (EAN-128)',
+    'GS1-128 (EAN 128)',
     'Code 39',
-    'Code 39 Full ASCII',
   };
 
   // ---------------------------------------------------------------------------
@@ -76,6 +72,7 @@ class BarcodeType {
     '7': 'PDF417',
     '8': 'Aztec',
     '9': 'ITF-14',
+    '10': 'ISBT 128',
   };
 
   // ---------------------------------------------------------------------------

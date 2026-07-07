@@ -12,5 +12,6 @@ namespace Invee.Data.Enums
         PDF417 = 7,
         Aztec = 8,
         ITF14 = 9,
+        Isbt128 = 10,
     }
 }

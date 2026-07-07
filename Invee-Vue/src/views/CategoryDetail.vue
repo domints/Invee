@@ -96,8 +96,9 @@ onBeforeRouteUpdate(async (to, from) => {
     }
 });
 
-const onCategoryCreated = async (newCategoryId: number) => {
+const onCategoryCreated = async () => {
     await refreshCategories()
+    await updateCurrentCat(route.params.id as string)
 }
 </script>
 
@@ -105,7 +106,7 @@ const onCategoryCreated = async (newCategoryId: number) => {
     <div class="detailContainer">
         <el-card>
             <template #header>
-                <CardHeader v-if="userStore?.loggedIn" :title="currentCategory?.name!" button-text="Add child +" @btn-clicked="newCategoryDialog?.openCreateCategoryDialog(Number(route.params.id))" @categoryCreated="onCategoryCreated">
+                <CardHeader v-if="userStore?.loggedIn" :title="currentCategory?.name!" button-text="Add child +" @btn-clicked="newCategoryDialog?.openCreateCategoryDialog(currentCategory!.id)">
                 </CardHeader>
             </template>
             <nav class="catNav">
@@ -152,7 +153,7 @@ const onCategoryCreated = async (newCategoryId: number) => {
         </div>
     </div>
 
-    <NewCategoryDialog ref="newCategoryDialog"></NewCategoryDialog>
+    <NewCategoryDialog ref="newCategoryDialog" @categoryCreated="onCategoryCreated"></NewCategoryDialog>
     <NewItemDialog ref="newItemDialog"></NewItemDialog>
 </template>
 

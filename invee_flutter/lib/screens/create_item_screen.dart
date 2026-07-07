@@ -4,6 +4,7 @@ import '../models/barcode_type.dart';
 import '../models/category.dart';
 import '../models/storage.dart';
 import '../services/api_service.dart';
+import '../utils.dart';
 import '../widgets/entity_picker_modal.dart';
 import 'item_detail_screen.dart';
 
@@ -248,8 +249,9 @@ class _CreateItemScreenState extends State<CreateItemScreen> {
 
     setState(() => _saving = true);
     try {
+      final itemName = _nameController.text.trim();
       final itemId = await widget.apiService.createItem(
-        name: _nameController.text.trim(),
+        name: itemName,
         categoryId: _selectedCategory!.id,
         storageId: _selectedStorage!.id,
         quantityType: _quantityType,
@@ -257,6 +259,7 @@ class _CreateItemScreenState extends State<CreateItemScreen> {
             ? double.tryParse(_quantityController.text.trim())
             : null,
         expiresAt: _expiresAt,
+        slug: slugify(itemName),
       );
 
       // Attach barcode code if scanned

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../models/storage.dart';
 import '../models/storage_detail.dart';
 import '../services/api_service.dart';
+import '../utils.dart';
 import '../widgets/entity_picker_modal.dart';
 
 /// Form screen to create a new storage.
@@ -116,10 +117,12 @@ class _AddStorageScreenState extends State<AddStorageScreen> {
     }
     setState(() => _saving = true);
     try {
+      final storageName = _nameController.text.trim();
       await widget.apiService.createStorage(
-        name: _nameController.text.trim(),
+        name: storageName,
         storageTypeId: _selectedType!.id,
         parentId: _selectedParent?.id,
+        slug: slugify(storageName),
       );
       if (mounted) Navigator.of(context).pop(true);
     } catch (e) {

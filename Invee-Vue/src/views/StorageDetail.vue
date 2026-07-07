@@ -16,19 +16,15 @@ import { useUserStore } from '@/stores/user';
 const userStore = useUserStore();
 const newItemDialog = useTemplateRef('newItemDialog');
 
-const storageId = ref(0);
 const storage = ref<GetStorageResponse>();
 const images = ref<ImageDto[]>([]);
 
 const reloadStorage = async (id: string) => {
-    console.log(id);
     if (!isNaN(+id)) {
-        storageId.value = +id;
         let s = await getStorage({ path: { id: +id } });
         return s.data;
     }
     else {
-        storageId.value = -1;
         let s = await getStorageBySlug({ path: { slug: id } });
         return s.data;
     }
@@ -69,7 +65,7 @@ const onImageDeleted = (imageId: number) => {
             <h2>{{ storage?.name }}</h2>
         </div>
         <div v-if="userStore.loggedIn" class="storage-header__actions">
-            <el-button type="primary" plain @click="newItemDialog?.open('storage', storageId)">Add item +</el-button>
+            <el-button type="primary" plain @click="newItemDialog?.open('storage', storage!.id!)">Add item +</el-button>
         </div>
     </div>
 
@@ -79,13 +75,13 @@ const onImageDeleted = (imageId: number) => {
         <ImageGallery
             :images="images"
             entity-type="storage"
-            :entity-id="storageId"
+            :entity-id="storage!.id!"
             @deleted="onImageDeleted"
         />
         <ImageUpload
             v-if="userStore.loggedIn"
             entity-type="storage"
-            :entity-id="storageId"
+            :entity-id="storage!.id!"
             @uploaded="onImageUploaded"
         />
     </div>

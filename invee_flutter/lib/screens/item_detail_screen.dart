@@ -3,6 +3,7 @@ import '../models/barcode_type.dart';
 import '../models/item.dart';
 import '../services/api_service.dart';
 import 'edit_item_screen.dart';
+import 'qr_scanner_screen.dart';
 
 class ItemDetailScreen extends StatefulWidget {
   final int itemId;
@@ -144,11 +145,49 @@ class _ItemDetailViewState extends State<_ItemDetailView> {
         if (item.note != null && item.note!.isNotEmpty)
           _buildNoteSection(context),
         _buildTagsSection(context),
-        if (item.codes.isNotEmpty) _buildCodesSection(context),
+        _buildCodesSection(context),
         if (item.borrowings.isNotEmpty) _buildBorrowingsSection(context),
         const SizedBox(height: 24),
       ],
     );
+  }
+
+  Future<void> _deleteImage(BuildContext context, int imageId) async {
+    final messenger = ScaffoldMessenger.of(context);
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Delete Image'),
+        content: const Text('Remove this image from the item?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(false),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            style: FilledButton.styleFrom(
+              backgroundColor: Theme.of(ctx).colorScheme.error,
+              foregroundColor: Theme.of(ctx).colorScheme.onError,
+            ),
+            onPressed: () => Navigator.of(ctx).pop(true),
+            child: const Text('Delete'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true || !mounted) return;
+    try {
+      await apiService.deleteItemImage(item.id, imageId);
+      if (mounted) widget.onReload();
+    } catch (e) {
+      if (!mounted) return;
+      messenger.showSnackBar(
+        SnackBar(
+          content: Text('Failed to delete image: $e'),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    }
   }
 
   Widget _buildImageGallery(BuildContext context) {
@@ -161,19 +200,40 @@ class _ItemDetailViewState extends State<_ItemDetailView> {
           final url = apiService.imageUrl(img.url);
           return Padding(
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(12),
-              child: Image.network(
-                url,
-                fit: BoxFit.cover,
-                errorBuilder: (_, _, _) => const Center(
-                  child: Icon(Icons.broken_image_outlined, size: 48, color: Colors.grey),
+            child: Stack(
+              children: [
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(12),
+                  child: Image.network(
+                    url,
+                    width: double.infinity,
+                    height: double.infinity,
+                    fit: BoxFit.cover,
+                    errorBuilder: (_, _, _) => const Center(
+                      child: Icon(Icons.broken_image_outlined,
+                          size: 48, color: Colors.grey),
+                    ),
+                    loadingBuilder: (_, child, progress) {
+                      if (progress == null) return child;
+                      return const Center(child: CircularProgressIndicator());
+                    },
+                  ),
                 ),
-                loadingBuilder: (_, child, progress) {
-                  if (progress == null) return child;
-                  return const Center(child: CircularProgressIndicator());
-                },
-              ),
+                Positioned(
+                  top: 6,
+                  right: 6,
+                  child: Material(
+                    color: Colors.black54,
+                    borderRadius: BorderRadius.circular(20),
+                    child: IconButton(
+                      icon: const Icon(Icons.delete_outline,
+                          color: Colors.white, size: 20),
+                      tooltip: 'Delete image',
+                      onPressed: () => _deleteImage(context, img.id),
+                    ),
+                  ),
+                ),
+              ],
             ),
           );
         },
@@ -304,6 +364,18 @@ class _ItemDetailViewState extends State<_ItemDetailView> {
               ],
             ),
           ),
+          if (_quantityTypeInt(item.quantityType) != 0) ...[
+            IconButton(
+              icon: const Icon(Icons.remove, size: 18),
+              tooltip: 'Decrease',
+              onPressed: () => _adjustQuantity(context, -1),
+            ),
+            IconButton(
+              icon: const Icon(Icons.add, size: 18),
+              tooltip: 'Increase',
+              onPressed: () => _adjustQuantity(context, 1),
+            ),
+          ],
           IconButton(
             icon: const Icon(Icons.edit_outlined, size: 18),
             tooltip: 'Edit quantity',
@@ -314,11 +386,42 @@ class _ItemDetailViewState extends State<_ItemDetailView> {
     );
   }
 
+  Future<void> _adjustQuantity(BuildContext context, double delta) async {
+    final messenger = ScaffoldMessenger.of(context);
+    final newQty = (item.quantity ?? 0) + delta;
+    try {
+      await apiService.updateItem(
+        id: item.id,
+        name: item.name,
+        categoryId: item.category.id,
+        storageId: item.storage.id,
+        quantityType: _quantityTypeInt(item.quantityType),
+        quantity: newQty,
+        broken: item.broken,
+        note: item.note,
+        slug: item.slug,
+        expiresAt: item.expiresAt,
+      );
+      if (mounted) widget.onReload();
+    } catch (e) {
+      if (!mounted) return;
+      messenger.showSnackBar(
+        SnackBar(
+          content: Text('Failed to update quantity: $e'),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    }
+  }
+
   Future<void> _showEditQuantityDialog(BuildContext context) async {
     final messenger = ScaffoldMessenger.of(context);
-    final controller = TextEditingController(
-      text: item.quantity?.toString() ?? '',
-    );
+    final initialText = item.quantity?.toString() ?? '';
+    final controller = TextEditingController(text: initialText)
+      ..selection = TextSelection(
+        baseOffset: 0,
+        extentOffset: initialText.length,
+      );
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
@@ -344,10 +447,9 @@ class _ItemDetailViewState extends State<_ItemDetailView> {
         ],
       ),
     );
+    final raw = controller.text.trim();
     controller.dispose();
     if (confirmed != true || !mounted) return;
-
-    final raw = controller.text.trim();
     final newQty = raw.isEmpty ? null : double.tryParse(raw);
 
     try {
@@ -505,6 +607,81 @@ class _ItemDetailViewState extends State<_ItemDetailView> {
     );
   }
 
+  Future<void> _deleteBarcode(BuildContext context, int codeId) async {
+    final messenger = ScaffoldMessenger.of(context);
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Delete Barcode'),
+        content: const Text('Remove this barcode from the item?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(false),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            style: FilledButton.styleFrom(
+              backgroundColor: Theme.of(ctx).colorScheme.error,
+              foregroundColor: Theme.of(ctx).colorScheme.onError,
+            ),
+            onPressed: () => Navigator.of(ctx).pop(true),
+            child: const Text('Delete'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true || !mounted) return;
+    try {
+      await apiService.deleteItemCode(item.id, codeId);
+      if (mounted) widget.onReload();
+    } catch (e) {
+      if (!mounted) return;
+      messenger.showSnackBar(
+        SnackBar(
+          content: Text('Failed to delete barcode: $e'),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    }
+  }
+
+  Future<void> _addBarcode(BuildContext context) async {
+    final messenger = ScaffoldMessenger.of(context);
+    final result = await Navigator.of(context).push<Map<String, String?>>(
+      MaterialPageRoute(builder: (_) => const QrScannerScreen()),
+    );
+    if (result == null || !mounted) return;
+
+    final contents = result['data'];
+    final codeTypeStr = result['codeType'];
+    if (contents == null || contents.isEmpty) return;
+
+    final codeType = BarcodeType.fromCipherlab(codeTypeStr);
+    if (codeType == null) {
+      messenger.showSnackBar(
+        SnackBar(
+          content: Text(
+              'Unsupported barcode format: ${codeTypeStr ?? 'unknown'}'),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+      return;
+    }
+
+    try {
+      await apiService.addItemCode(item.id, codeType, contents);
+      if (mounted) widget.onReload();
+    } catch (e) {
+      if (!mounted) return;
+      messenger.showSnackBar(
+        SnackBar(
+          content: Text('Failed to add barcode: $e'),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    }
+  }
+
   Widget _buildCodesSection(BuildContext context) {
     final theme = Theme.of(context);
     return Card(
@@ -519,47 +696,74 @@ class _ItemDetailViewState extends State<_ItemDetailView> {
                 Icon(Icons.qr_code, size: 18,
                     color: theme.colorScheme.primary),
                 const SizedBox(width: 8),
-                Text(
-                  'Barcodes',
-                  style: theme.textTheme.labelLarge?.copyWith(
-                    color: theme.colorScheme.primary,
+                Expanded(
+                  child: Text(
+                    'Barcodes',
+                    style: theme.textTheme.labelLarge?.copyWith(
+                      color: theme.colorScheme.primary,
+                    ),
                   ),
+                ),
+                IconButton(
+                  icon: const Icon(Icons.qr_code_scanner, size: 18),
+                  tooltip: 'Add barcode',
+                  onPressed: () => _addBarcode(context),
                 ),
               ],
             ),
-            const SizedBox(height: 8),
-            ...item.codes.map(
-              (c) => Padding(
-                padding: const EdgeInsets.symmetric(vertical: 4),
-                child: Row(
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 6, vertical: 2),
-                      decoration: BoxDecoration(
-                        color: theme.colorScheme.secondaryContainer,
-                        borderRadius: BorderRadius.circular(4),
-                      ),
-                      child: Text(
-                        _codeTypeName(c.codeType),
-                        style: theme.textTheme.labelSmall?.copyWith(
-                          color: theme.colorScheme.onSecondaryContainer,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: Text(
-                        c.contents,
-                        style: theme.textTheme.bodyMedium?.copyWith(
-                          fontFamily: 'monospace',
-                        ),
-                      ),
-                    ),
-                  ],
+            if (item.codes.isEmpty) ...[
+              const SizedBox(height: 4),
+              Text(
+                'No barcodes',
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
                 ),
               ),
-            ),
+            ] else ...[
+              const SizedBox(height: 8),
+              ...item.codes.map(
+                (c) => Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 2),
+                  child: Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 6, vertical: 2),
+                        decoration: BoxDecoration(
+                          color: theme.colorScheme.secondaryContainer,
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                        child: Text(
+                          _codeTypeName(c.codeType),
+                          style: theme.textTheme.labelSmall?.copyWith(
+                            color: theme.colorScheme.onSecondaryContainer,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: Text(
+                          c.contents,
+                          style: theme.textTheme.bodyMedium?.copyWith(
+                            fontFamily: 'monospace',
+                          ),
+                        ),
+                      ),
+                      IconButton(
+                        icon: Icon(
+                          Icons.delete_outline,
+                          size: 18,
+                          color: theme.colorScheme.error,
+                        ),
+                        tooltip: 'Delete barcode',
+                        visualDensity: VisualDensity.compact,
+                        onPressed: () => _deleteBarcode(context, c.id),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
           ],
         ),
       ),
@@ -633,6 +837,8 @@ class _ItemDetailViewState extends State<_ItemDetailView> {
   String _codeTypeName(String raw) => BarcodeType.displayName(raw);
 
   int _quantityTypeInt(String type) {
+    final asInt = int.tryParse(type);
+    if (asInt != null) return asInt;
     switch (type.toLowerCase()) {
       case 'levels':
         return 1;
@@ -670,6 +876,8 @@ class _TagEditorSheetState extends State<_TagEditorSheet> {
   bool _saving = false;
   String? _error;
   final _newTagController = TextEditingController();
+  final _searchController = TextEditingController();
+  String _searchQuery = '';
   bool _creatingTag = false;
 
   @override
@@ -681,6 +889,7 @@ class _TagEditorSheetState extends State<_TagEditorSheet> {
   @override
   void dispose() {
     _newTagController.dispose();
+    _searchController.dispose();
     super.dispose();
   }
 
@@ -834,7 +1043,13 @@ class _TagEditorSheetState extends State<_TagEditorSheet> {
         ),
       );
     }
-    final tags = _allTags ?? [];
+    final allTags = _allTags ?? [];
+    final filteredTags = _searchQuery.isEmpty
+        ? allTags
+        : allTags
+            .where((t) =>
+                t.name.toLowerCase().contains(_searchQuery.toLowerCase()))
+            .toList();
     return ListView(
       controller: scrollController,
       padding: const EdgeInsets.all(16),
@@ -867,9 +1082,35 @@ class _TagEditorSheetState extends State<_TagEditorSheet> {
                   ),
           ],
         ),
+        const SizedBox(height: 12),
+        // Search filter
+        TextField(
+          controller: _searchController,
+          decoration: InputDecoration(
+            labelText: 'Search tags',
+            prefixIcon: const Icon(Icons.search, size: 18),
+            suffixIcon: _searchQuery.isNotEmpty
+                ? IconButton(
+                    icon: const Icon(Icons.clear, size: 18),
+                    onPressed: () {
+                      _searchController.clear();
+                      setState(() => _searchQuery = '');
+                    },
+                  )
+                : null,
+            border: const OutlineInputBorder(),
+            isDense: true,
+          ),
+          onChanged: (v) => setState(() => _searchQuery = v),
+        ),
         const SizedBox(height: 16),
-        if (tags.isEmpty)
+        if (allTags.isEmpty)
           Text('No tags yet. Create one above.',
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
+              ))
+        else if (filteredTags.isEmpty)
+          Text('No tags match "$_searchQuery".',
               style: theme.textTheme.bodySmall?.copyWith(
                 color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
               ))
@@ -877,7 +1118,7 @@ class _TagEditorSheetState extends State<_TagEditorSheet> {
           Wrap(
             spacing: 8,
             runSpacing: 8,
-            children: tags.map((tag) {
+            children: filteredTags.map((tag) {
               final selected = _selectedIds.contains(tag.id);
               return FilterChip(
                 label: Text(tag.name),
