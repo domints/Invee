@@ -3,6 +3,7 @@ import 'package:image_picker/image_picker.dart';
 import '../models/item.dart' show ImageDto;
 import '../models/storage_detail.dart';
 import '../services/api_service.dart';
+import '../utils/quantity_utils.dart';
 import '../widgets/speed_dial_fab.dart';
 import 'add_storage_screen.dart';
 import 'category_detail_screen.dart' show ItemTile;
@@ -422,12 +423,38 @@ class _StorageDetailScreenState extends State<StorageDetailScreen> {
               label: 'Items',
               color: Theme.of(context).colorScheme.primary,
             ),
-            ...detail.items.map(
-              (item) => ItemTile(
-                item: item,
-                onTap: () => _openItem(item.id),
+            ...detail.items
+                .where((i) => !isZeroAmount(i))
+                .map(
+                  (item) => ItemTile(
+                    item: item,
+                    onTap: () => _openItem(item.id),
+                  ),
+                ),
+            if (detail.items.any(isZeroAmount))
+              ExpansionTile(
+                leading: Icon(
+                  Icons.inventory_2_outlined,
+                  color: Theme.of(context).colorScheme.outline,
+                  size: 20,
+                ),
+                title: Text(
+                  'Empty items (${detail.items.where(isZeroAmount).length})',
+                  style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                        color: Theme.of(context).colorScheme.outline,
+                      ),
+                ),
+                initiallyExpanded: false,
+                children: detail.items
+                    .where(isZeroAmount)
+                    .map(
+                      (item) => ItemTile(
+                        item: item,
+                        onTap: () => _openItem(item.id),
+                      ),
+                    )
+                    .toList(),
               ),
-            ),
           ],
           const SizedBox(height: 80),
         ],

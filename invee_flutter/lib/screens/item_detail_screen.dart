@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../active_item.dart';
 import '../models/barcode_type.dart';
 import '../models/item.dart';
 import '../services/api_service.dart';
@@ -27,7 +28,19 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
   @override
   void initState() {
     super.initState();
+    ActiveItemState.itemId = widget.itemId;
+    ActiveItemState.onReload = _loadItem;
     _loadItem();
+  }
+
+  @override
+  void dispose() {
+    if (ActiveItemState.itemId == widget.itemId) {
+      ActiveItemState.itemId = null;
+      ActiveItemState.itemName = null;
+      ActiveItemState.onReload = null;
+    }
+    super.dispose();
   }
 
   Future<void> _loadItem() async {
@@ -37,7 +50,10 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
     });
     try {
       final item = await widget.apiService.getItem(widget.itemId);
-      if (mounted) setState(() => _item = item);
+      if (mounted) {
+        ActiveItemState.itemName = item.name;
+        setState(() => _item = item);
+      }
     } catch (e) {
       if (mounted) setState(() => _error = e.toString());
     } finally {

@@ -39,3 +39,9 @@ export function formatItemQuantity(item: { quantityType?: number, quantity?: num
     }
     return null
 }
+
+export function isZeroAmount(item: { quantityType?: number, quantity?: number | null, level?: number | null }): boolean {
+    if (item.quantityType === 2) return (item.quantity ?? 0) <= 0
+    if (item.quantityType === 1) return item.level === 0
+    return false
+}

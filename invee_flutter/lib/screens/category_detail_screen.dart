@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../models/category.dart';
 import '../models/item.dart';
 import '../services/api_service.dart';
+import '../utils/quantity_utils.dart';
 import '../widgets/speed_dial_fab.dart';
 import 'add_category_screen.dart';
 import 'create_item_screen.dart';
@@ -303,6 +304,8 @@ class _CategoryDetailScreenState extends State<CategoryDetailScreen> {
 
     final subcategories = _subcategories ?? [];
     final items = _items ?? [];
+    final activeItems = items.where((i) => !isZeroAmount(i)).toList();
+    final emptyItems = items.where((i) => isZeroAmount(i)).toList();
 
     if (subcategories.isEmpty && items.isEmpty) {
       return Center(
@@ -343,19 +346,42 @@ class _CategoryDetailScreenState extends State<CategoryDetailScreen> {
               ),
             ),
           ],
-          if (items.isNotEmpty) ...[
+          if (activeItems.isNotEmpty) ...[
             _SectionHeader(
               icon: Icons.inventory_2_outlined,
               label: 'Items',
               color: Theme.of(context).colorScheme.primary,
             ),
-            ...items.map(
+            ...activeItems.map(
               (item) => ItemTile(
                 item: item,
                 onTap: () => _openItem(item.id),
               ),
             ),
           ],
+          if (emptyItems.isNotEmpty)
+            ExpansionTile(
+              leading: Icon(
+                Icons.inventory_2_outlined,
+                color: Theme.of(context).colorScheme.outline,
+                size: 20,
+              ),
+              title: Text(
+                'Empty items (${emptyItems.length})',
+                style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                      color: Theme.of(context).colorScheme.outline,
+                    ),
+              ),
+              initiallyExpanded: false,
+              children: emptyItems
+                  .map(
+                    (item) => ItemTile(
+                      item: item,
+                      onTap: () => _openItem(item.id),
+                    ),
+                  )
+                  .toList(),
+            ),
           // Extra padding so FAB doesn't cover last item
           const SizedBox(height: 80),
         ],

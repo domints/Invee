@@ -5,6 +5,7 @@ import 'dart:developer' as dev;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+import 'active_item.dart';
 import 'models/barcode_type.dart';
 import 'screens/auth_screen.dart';
 import 'screens/create_item_screen.dart';
@@ -231,32 +232,73 @@ class _AppEntryState extends State<_AppEntry> {
   void _showScanNotFound(ApiService api, String contents, String? codeType) {
     final ctx = _navigatorKey.currentContext;
     if (ctx == null) return;
+
+    final activeId = ActiveItemState.itemId;
+    final activeName = ActiveItemState.itemName;
+    final codeTypeInt = BarcodeType.fromCipherlab(codeType);
+    final canAddToActive = activeId != null && codeTypeInt != null;
+
     showDialog<void>(
       context: ctx,
       builder: (dialogCtx) => AlertDialog(
         title: const Text('Barcode not recognized'),
         content: Text(
-          'No item found for barcode:\n$contents\n\nWould you like to create a new item with this barcode?',
+          canAddToActive
+              ? 'No item found for:\n$contents\n\nAdd it to "${activeName ?? 'current item'}"?'
+              : 'No item found for barcode:\n$contents\n\nWould you like to create a new item with this barcode?',
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(dialogCtx).pop(),
             child: const Text('Cancel'),
           ),
-          FilledButton(
-            onPressed: () {
-              Navigator.of(dialogCtx).pop();
-              _navigatorKey.currentState?.push(
-                MaterialPageRoute(
-                  builder: (_) => CreateItemScreen(
-                    apiService: api,
-                    prefillBarcode: contents,
-                    prefillCodeType: codeType,
+          if (canAddToActive)
+            OutlinedButton(
+              onPressed: () {
+                Navigator.of(dialogCtx).pop();
+                _navigatorKey.currentState?.push(
+                  MaterialPageRoute(
+                    builder: (_) => CreateItemScreen(
+                      apiService: api,
+                      prefillBarcode: contents,
+                      prefillCodeType: codeType,
+                    ),
                   ),
-                ),
-              );
+                );
+              },
+              child: const Text('Create new'),
+            ),
+          FilledButton(
+            onPressed: () async {
+              Navigator.of(dialogCtx).pop();
+              if (canAddToActive) {
+                try {
+                  await api.addItemCode(activeId, codeTypeInt, contents);
+                  ActiveItemState.onReload?.call();
+                } catch (e) {
+                  final errCtx = _navigatorKey.currentContext;
+                  if (errCtx != null && errCtx.mounted) {
+                    ScaffoldMessenger.of(errCtx).showSnackBar(
+                      SnackBar(
+                        content: Text('Failed to add barcode: $e'),
+                        behavior: SnackBarBehavior.floating,
+                      ),
+                    );
+                  }
+                }
+              } else {
+                _navigatorKey.currentState?.push(
+                  MaterialPageRoute(
+                    builder: (_) => CreateItemScreen(
+                      apiService: api,
+                      prefillBarcode: contents,
+                      prefillCodeType: codeType,
+                    ),
+                  ),
+                );
+              }
             },
-            child: const Text('Create'),
+            child: Text(canAddToActive ? 'Add to item' : 'Create'),
           ),
         ],
       ),

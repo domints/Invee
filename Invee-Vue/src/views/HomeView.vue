@@ -1,10 +1,10 @@
 <script setup lang="ts">
 import { type CategoryTreeResponse, getCategoryTree, getAllItems, lookupItemByCode, getExpiringItems, type ItemListEntry } from '@/client';
-import { ref } from 'vue';
+import { ref, computed } from 'vue';
 import { ElInput } from 'element-plus';
 import { watchDebounced, onClickOutside } from '@vueuse/core';
 import { useRouter } from 'vue-router';
-import { slugId } from '@/utils';
+import { slugId, isZeroAmount } from '@/utils';
 import SvgIcon from '@jamescoyle/vue-icon';
 import { mdiFolderOutline, mdiCubeOutline, mdiChevronRight, mdiAlertCircleOutline } from '@mdi/js';
 
@@ -75,6 +75,7 @@ const expiringItems = ref<ItemListEntry[]>([]);
 const refreshExpiring = async () => {
   expiringItems.value = (await getExpiringItems()).data ?? [];
 };
+const visibleExpiringItems = computed(() => expiringItems.value.filter(i => !isZeroAmount(i)));
 
 const categoryTree = ref<CategoryTreeResponse[]>();
 const refreshCategories = async () => {
@@ -119,14 +120,14 @@ await Promise.all([refreshCategories(), refreshExpiring()]);
       </div>
     </div>
 
-    <div v-if="expiringItems.length > 0" class="expiringSection">
+    <div v-if="visibleExpiringItems.length > 0" class="expiringSection">
       <div class="expiringSection__header">
         <SvgIcon type="mdi" size="1.25rem" :path="mdiAlertCircleOutline" class="expiringSection__icon" />
         <h3 class="expiringSection__title">Expiring Soon</h3>
       </div>
       <div class="expiringList">
         <router-link
-          v-for="item in expiringItems"
+          v-for="item in visibleExpiringItems"
           :key="item.id"
           :to="{ name: 'item', params: { id: item.id } }"
           class="expiringCard"

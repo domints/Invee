@@ -2,9 +2,9 @@
 import { ElButton, ElCard } from 'element-plus';
 import CardHeader from '@/components/CardHeader.vue';
 import { getCategoryItems, getCategoryTree, type ItemListEntry, type CategoryTreeResponse } from '@/client';
-import { ref, useTemplateRef } from 'vue';
+import { ref, computed, useTemplateRef } from 'vue';
 import { onBeforeRouteUpdate, useRoute } from 'vue-router';
-import { slugId, slugParentId } from '@/utils';
+import { slugId, slugParentId, isZeroAmount } from '@/utils';
 import NewCategoryDialog from '@/components/NewCategoryDialog.vue';
 import NewItemDialog from '@/components/NewItemDialog.vue';
 import ItemList from '@/components/ItemList.vue';
@@ -29,6 +29,8 @@ var slugDict: { [slug: string]: CategoryItem } = {};
 const currentCategory = ref<CategoryItem>();
 const currentChildren = ref<CategoryItem[]>();
 const currentItems = ref<ItemListEntry[]>([]);
+const activeItems = computed(() => currentItems.value.filter(i => !isZeroAmount(i)));
+const emptyItems = computed(() => currentItems.value.filter(i => isZeroAmount(i)));
 
 const newCategoryDialog = useTemplateRef("newCategoryDialog");
 const newItemDialog = useTemplateRef("newItemDialog");
@@ -148,8 +150,12 @@ const onCategoryCreated = async () => {
                     Add item +
                 </el-button>
             </div>
-            <ItemList v-if="currentItems.length" :items="currentItems" />
-            <p v-else class="empty-state">No items in this category</p>
+            <ItemList v-if="activeItems.length" :items="activeItems" />
+            <details v-if="emptyItems.length" class="empty-items-accordion">
+                <summary class="empty-items-accordion__summary">Empty items ({{ emptyItems.length }})</summary>
+                <ItemList :items="emptyItems" />
+            </details>
+            <p v-if="!activeItems.length && !emptyItems.length" class="empty-state">No items in this category</p>
         </div>
     </div>
 
@@ -186,6 +192,44 @@ const onCategoryCreated = async () => {
 .empty-state {
     color: var(--el-text-color-secondary);
     text-align: center;
+}
+
+.empty-items-accordion {
+    margin-top: 0.75rem;
+    border: 1px solid var(--el-border-color-lighter);
+    border-radius: var(--el-border-radius-base);
+
+    &__summary {
+        list-style: none;
+        display: flex;
+        align-items: center;
+        gap: 0.4rem;
+        padding: 0.55rem 0.75rem;
+        cursor: pointer;
+        font-size: 0.85rem;
+        color: var(--el-text-color-secondary);
+        user-select: none;
+        border-radius: var(--el-border-radius-base);
+        transition: background 0.15s;
+
+        &::-webkit-details-marker { display: none; }
+
+        &::before {
+            content: '▶';
+            font-size: 0.65rem;
+            transition: transform 0.2s;
+            flex-shrink: 0;
+        }
+
+        &:hover {
+            background: var(--el-fill-color-light);
+            color: var(--el-text-color-primary);
+        }
+    }
+
+    &[open] > .empty-items-accordion__summary::before {
+        transform: rotate(90deg);
+    }
 }
 
 /* ── Sidebar nav ── */

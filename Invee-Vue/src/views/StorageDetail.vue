@@ -6,11 +6,11 @@ import NewItemDialog from '@/components/NewItemDialog.vue';
 import ImageGallery from '@/components/ImageGallery.vue';
 import ImageUpload from '@/components/ImageUpload.vue';
 import { ElButton } from 'element-plus';
-import { ref, useTemplateRef } from 'vue'
+import { ref, computed, useTemplateRef } from 'vue'
 import { onBeforeRouteUpdate, useRoute } from 'vue-router'
 import SvgIcon from '@jamescoyle/vue-icon';
 import { mdiArrowUpLeftBold } from '@mdi/js';
-import { slugParentId } from '@/utils';
+import { slugParentId, isZeroAmount } from '@/utils';
 import { useUserStore } from '@/stores/user';
 
 const userStore = useUserStore();
@@ -18,6 +18,8 @@ const newItemDialog = useTemplateRef('newItemDialog');
 
 const storage = ref<GetStorageResponse>();
 const images = ref<ImageDto[]>([]);
+const activeItems = computed(() => (storage.value?.items ?? []).filter(i => !isZeroAmount(i)));
+const emptyItems = computed(() => (storage.value?.items ?? []).filter(i => isZeroAmount(i)));
 
 const reloadStorage = async (id: string) => {
     if (!isNaN(+id)) {
@@ -87,8 +89,12 @@ const onImageDeleted = (imageId: number) => {
     </div>
 
     <div class="items-section">
-        <ItemList v-if="storage?.items?.length" :items="storage.items" />
-        <p v-else-if="!storage?.childStorages?.length" class="empty-state">No items or sub-storages here</p>
+        <ItemList v-if="activeItems.length" :items="activeItems" />
+        <details v-if="emptyItems.length" class="empty-items-accordion">
+            <summary class="empty-items-accordion__summary">Empty items ({{ emptyItems.length }})</summary>
+            <ItemList :items="emptyItems" />
+        </details>
+        <p v-if="!activeItems.length && !emptyItems.length && !storage?.childStorages?.length" class="empty-state">No items or sub-storages here</p>
     </div>
 
     <NewItemDialog ref="newItemDialog"></NewItemDialog>
@@ -137,5 +143,43 @@ const onImageDeleted = (imageId: number) => {
 .empty-state {
     color: var(--el-text-color-secondary);
     text-align: center;
+}
+
+.empty-items-accordion {
+    margin-top: 0.75rem;
+    border: 1px solid var(--el-border-color-lighter);
+    border-radius: var(--el-border-radius-base);
+
+    &__summary {
+        list-style: none;
+        display: flex;
+        align-items: center;
+        gap: 0.4rem;
+        padding: 0.55rem 0.75rem;
+        cursor: pointer;
+        font-size: 0.85rem;
+        color: var(--el-text-color-secondary);
+        user-select: none;
+        border-radius: var(--el-border-radius-base);
+        transition: background 0.15s;
+
+        &::-webkit-details-marker { display: none; }
+
+        &::before {
+            content: '▶';
+            font-size: 0.65rem;
+            transition: transform 0.2s;
+            flex-shrink: 0;
+        }
+
+        &:hover {
+            background: var(--el-fill-color-light);
+            color: var(--el-text-color-primary);
+        }
+    }
+
+    &[open] > .empty-items-accordion__summary::before {
+        transform: rotate(90deg);
+    }
 }
 </style>

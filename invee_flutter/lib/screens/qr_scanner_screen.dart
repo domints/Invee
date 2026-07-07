@@ -15,10 +15,26 @@ class QrScannerScreen extends StatefulWidget {
 }
 
 class _QrScannerScreenState extends State<QrScannerScreen> {
-  final _controller = MobileScannerController(
-    detectionSpeed: DetectionSpeed.noDuplicates,
-  );
+  late final MobileScannerController _controller;
   bool _handled = false;
+  String? _startError;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = MobileScannerController(
+      detectionSpeed: DetectionSpeed.noDuplicates,
+    );
+    _startCamera();
+  }
+
+  Future<void> _startCamera() async {
+    try {
+      await _controller.start();
+    } catch (e) {
+      if (mounted) setState(() => _startError = e.toString());
+    }
+  }
 
   @override
   void dispose() {
@@ -65,8 +81,52 @@ class _QrScannerScreenState extends State<QrScannerScreen> {
     }
   }
 
+  Widget _buildError(String message) {
+    return Scaffold(
+      backgroundColor: Colors.black,
+      appBar: AppBar(
+        backgroundColor: Colors.black,
+        foregroundColor: Colors.white,
+        title: const Text('Scan QR Code'),
+      ),
+      body: Center(
+        child: Padding(
+          padding: const EdgeInsets.all(32),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(Icons.camera_alt_outlined,
+                  size: 64, color: Colors.white54),
+              const SizedBox(height: 16),
+              Text(
+                message,
+                textAlign: TextAlign.center,
+                style: const TextStyle(color: Colors.white70),
+              ),
+              const SizedBox(height: 24),
+              FilledButton.icon(
+                onPressed: () {
+                  setState(() => _startError = null);
+                  _startCamera();
+                },
+                icon: const Icon(Icons.refresh),
+                label: const Text('Retry'),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
+    if (_startError != null) {
+      return _buildError(
+        'Could not open camera.\n\nMake sure camera permission is granted.\n\n$_startError',
+      );
+    }
+
     final theme = Theme.of(context);
     return Scaffold(
       backgroundColor: Colors.black,
@@ -80,6 +140,9 @@ class _QrScannerScreenState extends State<QrScannerScreen> {
           MobileScanner(
             controller: _controller,
             onDetect: _onDetect,
+            errorBuilder: (context, error) => _buildError(
+              'Camera error: ${error.errorDetails?.details ?? error.errorCode.name}',
+            ),
           ),
           Center(
             child: Container(
