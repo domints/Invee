@@ -171,9 +171,14 @@ class _AppEntryState extends State<_AppEntry> {
     if (data == null || data.isEmpty) return;
 
     if (_isSetup) {
-      final url = _tryExtractConfigUrl(data);
-      if (url != null) {
-        _externalScanUrl.value = url;
+      final config = _tryExtractConfig(data);
+      if (config != null) {
+        final token = config['token'] as String?;
+        if (token != null && token.isNotEmpty) {
+          // Pre-store the token so verifyAuth() succeeds without the OIDC flow.
+          AuthService.setJwtToken(token);
+        }
+        _externalScanUrl.value = config['url'] as String;
       }
       // Ignore non-config scans while on setup screen.
       return;
@@ -183,12 +188,13 @@ class _AppEntryState extends State<_AppEntry> {
     if (api != null) _onScan(api, event);
   }
 
-  /// Tries to parse a config QR payload and returns the server URL, or null.
-  String? _tryExtractConfigUrl(String data) {
+  /// Tries to parse a config QR payload. Returns the full map if `url` is
+  /// present (may also contain `token`), otherwise null.
+  Map<String, dynamic>? _tryExtractConfig(String data) {
     try {
       final map = jsonDecode(data) as Map<String, dynamic>;
       final url = map['url'] as String?;
-      if (url != null && url.isNotEmpty) return url;
+      if (url != null && url.isNotEmpty) return map;
     } catch (_) {}
     return null;
   }

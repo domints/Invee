@@ -6,6 +6,7 @@ import CategoryDetail from '@/views/CategoryDetail.vue'
 import LoginView from '@/views/LoginView.vue'
 import ItemEdit from '@/views/ItemEdit.vue'
 import ItemDetail from '@/views/ItemDetail.vue'
+import MobileSetupView from '@/views/MobileSetupView.vue'
 import { useUserStore } from '@/stores/user'
 
 const router = createRouter({
@@ -53,6 +54,12 @@ const router = createRouter({
       path: '/item/:id/edit',
       name: 'item-edit',
       component: ItemEdit,
+      meta: { requiresAuth: true }
+    },
+    {
+      path: '/mobile-setup',
+      name: 'mobile-setup',
+      component: MobileSetupView,
       meta: { requiresAuth: true }
     }
   ],
