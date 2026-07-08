@@ -58,6 +58,7 @@ async function fetchToken() {
     const jwt = data.token as string
     token.value = jwt
     expiryDate.value = parseExpiry(jwt)
+    loading.value = false
     await renderQr(jwt)
   } catch {
     error.value = 'Failed to connect to server.'
