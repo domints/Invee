@@ -35,18 +35,19 @@ class InveeApp extends StatelessWidget {
       navigatorKey: _navigatorKey,
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(
-          seedColor: const Color(0xFF2563EB),
+          seedColor: const Color(0xFFFDC434),
           brightness: Brightness.light,
         ),
         useMaterial3: true,
       ),
       darkTheme: ThemeData(
         colorScheme: ColorScheme.fromSeed(
-          seedColor: const Color(0xFF2563EB),
+          seedColor: const Color(0xFFFDC434),
           brightness: Brightness.dark,
         ),
         useMaterial3: true,
       ),
+      themeMode: ThemeMode.dark,
       home: const _AppEntry(),
     );
   }

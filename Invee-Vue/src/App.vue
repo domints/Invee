@@ -9,7 +9,7 @@ const userStore = useUserStore();
   <header>
     <div class="logo">
       <RouterLink to="/">
-        <img alt="Vue logo" class="logo__img" src="@/assets/logo.svg" height="100%" />
+        <img alt="Invee logo" class="logo__img" src="/invee.svg" height="100%" />
         <span class="title">Invee</span>
       </RouterLink>
     </div>
@@ -50,7 +50,9 @@ header {
   display: flex;
   padding-top: 0.5rem;
   padding-bottom: 0.5rem;
-  height: 3rem;
+  height: 5rem;
+  background-color: var(--color-background-soft);
+  border-bottom: 1px solid var(--color-border);
 
   .logo {
     height: 100%;
@@ -65,9 +67,9 @@ header {
       .title {
         display: inline-block;
         margin-left: 0.8rem;
-        font-size: 1.2rem;
-        line-height: 1.2rem;
-        font-weight: 600;
+        font-size: 1.4rem;
+        line-height: 1.4rem;
+        font-weight: 700;
       }
     }
   }
@@ -82,17 +84,19 @@ header {
     align-items: center;
 
     a {
+      display: flex;
+      align-items: center;
       height: 100%;
       padding-left: 2rem;
       padding-right: 2rem;
     }
 
     span {
+      display: flex;
+      align-items: center;
       height: 100%;
       padding-left: 2rem;
       padding-right: 2rem;
-      padding-top: 3px;
-      padding-left: 3px;
     }
 
   }
