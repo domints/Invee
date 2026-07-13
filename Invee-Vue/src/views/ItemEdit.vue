@@ -5,6 +5,7 @@ import {
     deleteItemCode,
     getCategoryTree,
     getItem,
+    getItemBySlug,
     getStorages,
     getTags,
     setItemTags,
@@ -27,7 +28,7 @@ import ImageUpload from '@/components/ImageUpload.vue';
 const route = useRoute();
 const router = useRouter();
 const userStore = useUserStore();
-const itemId = Number(route.params.id);
+const rawId = route.params.id as string;
 
 const STOP_WORDS = new Set(['a', 'an', 'the', 'of', 'in', 'for', 'on', 'with', 'and', 'or', 'is', 'it', 'to', 'at', 'by']);
 
@@ -71,13 +72,14 @@ const suggestTagIds = (name: string, allTags: TagDto[]): number[] => {
 };
 
 const [itemResp, catResp, storResp, tagsResp] = await Promise.all([
-    getItem({ path: { id: itemId } }),
+    !isNaN(+rawId) ? getItem({ path: { id: +rawId } }) : getItemBySlug({ path: { slug: rawId } }),
     getCategoryTree(),
     getStorages(),
     getTags(),
 ]);
 
 const item = itemResp.data as ItemResponse;
+const itemId = item.id!;
 const images = ref<ImageDto[]>(item.images ?? []);
 
 const onImageUploaded = async () => {

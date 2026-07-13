@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import type { ItemListEntry } from '@/client';
-import { formatItemQuantity } from '@/utils';
+import { formatItemQuantity, slugId } from '@/utils';
 import { computed } from 'vue';
 import SvgIcon from '@jamescoyle/vue-icon'
 import { mdiCubeOutline } from '@mdi/js'
@@ -15,7 +15,7 @@ const quantityLabel = computed(() => formatItemQuantity(props.item))
 
 <template>
     <li>
-        <router-link :to="{ name: 'item', params: { id: item.id } }" class="row">
+        <router-link :to="{ name: 'item', params: slugId(item) }" class="row">
             <div class="icon">
                 <SvgIcon type="mdi" size="2rem" :path="mdiCubeOutline"></SvgIcon>
             </div>

@@ -1130,6 +1130,37 @@ export type GetItemResponses = {
 
 export type GetItemResponse = GetItemResponses[keyof GetItemResponses];
 
+export type GetItemBySlugData = {
+    body?: never;
+    path: {
+        slug: string;
+    };
+    query?: never;
+    url: '/api/items/slug/{slug}';
+};
+
+export type GetItemBySlugErrors = {
+    /**
+     * Bad Request
+     */
+    400: ErrorResponse;
+    /**
+     * Not Found
+     */
+    404: NotFoundResponse;
+};
+
+export type GetItemBySlugError = GetItemBySlugErrors[keyof GetItemBySlugErrors];
+
+export type GetItemBySlugResponses = {
+    /**
+     * OK
+     */
+    200: ItemResponse;
+};
+
+export type GetItemBySlugResponse = GetItemBySlugResponses[keyof GetItemBySlugResponses];
+
 export type UpdateItemData = {
     body: UpdateItem;
     path: {

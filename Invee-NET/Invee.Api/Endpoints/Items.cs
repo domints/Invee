@@ -18,6 +18,7 @@ namespace Invee.Api.Endpoints
             group.MapBodyPostCommand<CreateItem, int>("/");
             group.MapQuery<GetAllItems, List<ItemListEntry>>("/");
             group.MapQuery<GetItem, ItemResponse>("/{id:int}").AllowAnonymous();
+            group.MapQuery<GetItemBySlug, ItemResponse>("/slug/{slug:regex(^[a-z0-9_-]+$)}").AllowAnonymous();
             group.MapBodyAndParamPutCommand<IdParameter, UpdateItem>("/{id:int}");
             group.MapBodyAndParamPutCommand<IdParameter, SetItemTags>("/{id:int}/tags");
 

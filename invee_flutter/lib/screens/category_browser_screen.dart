@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import '../models/category.dart';
+import '../models/item.dart';
 import '../services/api_service.dart';
 import 'category_detail_screen.dart';
+import 'item_detail_screen.dart';
 
 /// Body-only widget (no Scaffold) listing top-level categories.
 /// Embedded inside [MainShell] via an IndexedStack.
@@ -16,6 +18,7 @@ class CategoryBrowserBody extends StatefulWidget {
 
 class CategoryBrowserBodyState extends State<CategoryBrowserBody> {
   List<CategoryTreeResponse>? _tree;
+  List<ItemListEntry> _expiringItems = [];
   String? _error;
   bool _loading = true;
 
@@ -31,10 +34,16 @@ class CategoryBrowserBodyState extends State<CategoryBrowserBody> {
       _error = null;
     });
     try {
-      final tree = await widget.apiService.getCategoryTree();
+      final results = await Future.wait([
+        widget.apiService.getCategoryTree(),
+        widget.apiService.getExpiringItems(),
+      ]);
       if (mounted) {
         setState(() {
-          _tree = tree;
+          _tree = results[0] as List<CategoryTreeResponse>;
+          _expiringItems = (results[1] as List<ItemListEntry>)
+              .where((i) => !_isZeroAmount(i))
+              .toList();
           _loading = false;
         });
       }
@@ -47,6 +56,23 @@ class CategoryBrowserBodyState extends State<CategoryBrowserBody> {
       }
     }
   }
+
+  bool _isZeroAmount(ItemListEntry item) {
+    if (item.quantityType == '2') return (item.quantity ?? 0) <= 0;
+    if (item.quantityType == '1') return item.level == '0';
+    return false;
+  }
+
+  String _formatExpiry(DateTime expiresAt) {
+    final now = DateTime.now();
+    final diff = expiresAt.difference(now).inDays;
+    if (diff < 0) return 'Expired ${diff.abs()}d ago';
+    if (diff == 0) return 'Expires today';
+    if (diff == 1) return 'Expires tomorrow';
+    return 'Expires in ${diff}d';
+  }
+
+  bool _isExpired(DateTime expiresAt) => expiresAt.isBefore(DateTime.now());
 
   @override
   Widget build(BuildContext context) {
@@ -74,7 +100,7 @@ class CategoryBrowserBodyState extends State<CategoryBrowserBody> {
         ),
       );
     }
-    if (_tree == null || _tree!.isEmpty) {
+    if ((_tree == null || _tree!.isEmpty) && _expiringItems.isEmpty) {
       return const Center(
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -94,15 +120,177 @@ class CategoryBrowserBodyState extends State<CategoryBrowserBody> {
         ),
       );
     }
+
+    final categories = _tree ?? [];
+    final expiring = _expiringItems;
+    // Total items: optional expiring header + expiring cards + optional category header + category tiles
+    final hasExpiring = expiring.isNotEmpty;
+    final expiringHeaderCount = hasExpiring ? 1 : 0;
+    final expiringCount = expiring.length;
+    final categoryHeaderCount = categories.isNotEmpty ? 1 : 0;
+    final totalCount = expiringHeaderCount + expiringCount + categoryHeaderCount + categories.length;
+
     return RefreshIndicator(
       onRefresh: reload,
-      child: ListView.separated(
-        itemCount: _tree!.length,
-        separatorBuilder: (_, _) => const Divider(height: 1),
-        itemBuilder: (ctx, i) => _CategoryRootTile(
-          category: _tree![i],
-          apiService: widget.apiService,
-          onChanged: reload,
+      child: ListView.builder(
+        itemCount: totalCount,
+        itemBuilder: (ctx, i) {
+          var idx = i;
+
+          if (hasExpiring) {
+            if (idx == 0) {
+              return _ExpiringSectionHeader();
+            }
+            idx -= 1;
+            if (idx < expiringCount) {
+              final item = expiring[idx];
+              return _ExpiringItemTile(
+                item: item,
+                label: _formatExpiry(item.expiresAt!),
+                expired: _isExpired(item.expiresAt!),
+                onTap: () async {
+                  await Navigator.of(ctx).push(
+                    MaterialPageRoute(
+                      builder: (_) => ItemDetailScreen(
+                        itemId: item.id,
+                        apiService: widget.apiService,
+                      ),
+                    ),
+                  );
+                  reload();
+                },
+              );
+            }
+            idx -= expiringCount;
+          }
+
+          if (categories.isNotEmpty) {
+            if (idx == 0) {
+              return const _SectionHeader(label: 'Categories');
+            }
+            idx -= 1;
+          }
+
+          final cat = categories[idx];
+          return Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              _CategoryRootTile(
+                category: cat,
+                apiService: widget.apiService,
+                onChanged: reload,
+              ),
+              if (idx < categories.length - 1) const Divider(height: 1),
+            ],
+          );
+        },
+      ),
+    );
+  }
+}
+
+class _ExpiringSectionHeader extends StatelessWidget {
+  const _ExpiringSectionHeader();
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+      child: Row(
+        children: [
+          Icon(Icons.warning_amber_rounded,
+              size: 18, color: colorScheme.error),
+          const SizedBox(width: 8),
+          Text(
+            'Expiring Soon',
+            style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                  fontWeight: FontWeight.w600,
+                ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _SectionHeader extends StatelessWidget {
+  final String label;
+
+  const _SectionHeader({required this.label});
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+      child: Text(
+        label,
+        style: Theme.of(context).textTheme.titleSmall?.copyWith(
+              fontWeight: FontWeight.w600,
+            ),
+      ),
+    );
+  }
+}
+
+class _ExpiringItemTile extends StatelessWidget {
+  final ItemListEntry item;
+  final String label;
+  final bool expired;
+  final VoidCallback onTap;
+
+  const _ExpiringItemTile({
+    required this.item,
+    required this.label,
+    required this.expired,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final bgColor = expired
+        ? colorScheme.errorContainer.withValues(alpha: 0.35)
+        : colorScheme.tertiaryContainer.withValues(alpha: 0.35);
+    final dateColor = expired ? colorScheme.error : colorScheme.tertiary;
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 3),
+      child: Material(
+        color: bgColor,
+        borderRadius: BorderRadius.circular(8),
+        child: InkWell(
+          borderRadius: BorderRadius.circular(8),
+          onTap: onTap,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+            child: Row(
+              children: [
+                Icon(Icons.inventory_2_outlined,
+                    size: 18, color: colorScheme.onSurfaceVariant),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    item.name,
+                    style: const TextStyle(fontWeight: FontWeight.w500),
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Text(
+                  label,
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: dateColor,
+                    fontWeight: expired ? FontWeight.w600 : FontWeight.normal,
+                  ),
+                ),
+                const SizedBox(width: 4),
+                Icon(Icons.chevron_right,
+                    size: 16, color: colorScheme.onSurfaceVariant),
+              ],
+            ),
+          ),
         ),
       ),
     );

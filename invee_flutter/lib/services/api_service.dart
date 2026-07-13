@@ -334,6 +334,14 @@ class ApiService {
     await _put('/api/items/$itemId/tags', {'tagIds': tagIds});
   }
 
+  /// Returns items expiring within the next 7 days (including already expired).
+  Future<List<ItemListEntry>> getExpiringItems() async {
+    final data = await _get('/api/items/expiring') as List<dynamic>;
+    return data
+        .map((i) => ItemListEntry.fromJson(i as Map<String, dynamic>))
+        .toList();
+  }
+
   /// Returns all items, optionally filtered by [search] (matches name or tag).
   Future<List<ItemListEntry>> getAllItems({String? search}) async {
     final params = <String, String>{};

@@ -4,6 +4,7 @@ import {
     borrowReservation,
     cancelReservation,
     getItem,
+    getItemBySlug,
     reserveItem,
     returnItem,
     updateItem,
@@ -27,10 +28,13 @@ import ImageGallery from '@/components/ImageGallery.vue';
 const route = useRoute();
 const router = useRouter();
 const userStore = useUserStore();
-const itemId = Number(route.params.id);
+const rawId = route.params.id as string;
 
-const itemResp = await getItem({ path: { id: itemId } });
+const itemResp = !isNaN(+rawId)
+    ? await getItem({ path: { id: +rawId } })
+    : await getItemBySlug({ path: { slug: rawId } });
 const item = ref<ItemResponse>(itemResp.data as ItemResponse);
+const itemId = item.value.id!;
 const images = ref<ImageDto[]>(item.value.images ?? []);
 
 // Borrowing status constants
