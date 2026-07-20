@@ -5,6 +5,7 @@ import ItemList from '@/components/ItemList.vue';
 import NewItemDialog from '@/components/NewItemDialog.vue';
 import ImageGallery from '@/components/ImageGallery.vue';
 import ImageUpload from '@/components/ImageUpload.vue';
+import OpenInAppButton from '@/components/OpenInAppButton.vue';
 import { ElButton } from 'element-plus';
 import { ref, computed, useTemplateRef } from 'vue'
 import { onBeforeRouteUpdate, useRoute } from 'vue-router'
@@ -36,6 +37,11 @@ const route = useRoute();
 storage.value = await reloadStorage(<string>route.params.id);
 images.value = storage.value?.images ?? [];
 
+const storageSlug = computed(() => {
+    const raw = route.params.id as string;
+    return isNaN(+raw) ? raw : null;
+});
+
 onBeforeRouteUpdate(async (to, from) => {
     if (to.params.id !== from.params.id) {
         storage.value = await reloadStorage(<string>to.params.id);
@@ -66,8 +72,9 @@ const onImageDeleted = (imageId: number) => {
         <div class="storage-header__name">
             <h2>{{ storage?.name }}</h2>
         </div>
-        <div v-if="userStore.loggedIn" class="storage-header__actions">
-            <el-button type="primary" plain @click="newItemDialog?.open('storage', storage!.id!)">Add item +</el-button>
+        <div class="storage-header__actions">
+            <OpenInAppButton kind="storage" :slug="storageSlug" />
+            <el-button v-if="userStore.loggedIn" type="primary" plain @click="newItemDialog?.open('storage', storage!.id!)">Add item +</el-button>
         </div>
     </div>
 
@@ -126,6 +133,7 @@ const onImageDeleted = (imageId: number) => {
     &__actions {
         display: flex;
         align-items: center;
+        gap: 0.5rem;
     }
 }
 

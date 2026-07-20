@@ -45,11 +45,15 @@ class HealthResponse {
   final String status;
   final String database;
   final String version;
+  final String shortHost;
+  final String canonicalBaseUrl;
 
   HealthResponse({
     required this.status,
     required this.database,
     required this.version,
+    this.shortHost = '',
+    this.canonicalBaseUrl = '',
   });
 
   bool get isHealthy => status == 'ok';
@@ -59,6 +63,8 @@ class HealthResponse {
       status: json['status'] as String? ?? 'unknown',
       database: json['database'] as String? ?? 'unknown',
       version: json['version'] as String? ?? 'unknown',
+      shortHost: json['shortHost'] as String? ?? '',
+      canonicalBaseUrl: json['canonicalBaseUrl'] as String? ?? '',
     );
   }
 }
@@ -191,6 +197,13 @@ class ApiService {
   Future<ItemResponse> getItem(int itemId) async {
     final data =
         await _get('/api/items/$itemId') as Map<String, dynamic>;
+    return ItemResponse.fromJson(data);
+  }
+
+  /// Resolves an item by its slug. Throws [ApiException] (404) when not found.
+  Future<ItemResponse> getItemBySlug(String slug) async {
+    final data =
+        await _get('/api/items/slug/$slug') as Map<String, dynamic>;
     return ItemResponse.fromJson(data);
   }
 
@@ -410,6 +423,13 @@ class ApiService {
   /// Returns a storage's detail view (child storages + items).
   Future<StorageItemsResponse> getStorageDetail(int id) async {
     final data = await _get('/api/storages/$id') as Map<String, dynamic>;
+    return StorageItemsResponse.fromJson(data);
+  }
+
+  /// Resolves a storage by its slug. Throws [ApiException] (404) when not found.
+  Future<StorageItemsResponse> getStorageBySlug(String slug) async {
+    final data =
+        await _get('/api/storages/slug/$slug') as Map<String, dynamic>;
     return StorageItemsResponse.fromJson(data);
   }
 

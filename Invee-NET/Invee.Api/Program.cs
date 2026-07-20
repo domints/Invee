@@ -1,6 +1,7 @@
 using System.IdentityModel.Tokens.Jwt;
 using System.Text;
 using System.Text.Json.Serialization;
+using Invee.Api.Configuration;
 using Invee.Api.Endpoints;
 using Invee.Api.Services;
 using Invee.Application.Services;
@@ -12,6 +13,7 @@ using Microsoft.AspNetCore.Authentication.OpenIdConnect;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Protocols.OpenIdConnect;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.Net.Http.Headers;
@@ -124,6 +126,8 @@ var requireAuthPolicy = new AuthorizationPolicyBuilder()
 builder.Services.AddAuthorizationBuilder()
     .SetFallbackPolicy(requireAuthPolicy);
 
+builder.Services.Configure<ShortLinkOptions>(builder.Configuration.GetSection(ShortLinkOptions.SectionName));
+
 builder.Services.AddMediatR(cfg => cfg.RegisterServicesFromAssemblyContaining<Invee.Application.Marker>());
 
 builder.Services.AddScoped<IImageStore, DiskImageStore>();
@@ -194,6 +198,10 @@ app.Use(async (cx, next) =>
 });
 app.MapGroup("/api")
     .MapApis();
+
+var shortLinkOptions = app.Services.GetRequiredService<IOptions<ShortLinkOptions>>().Value;
+if (!string.IsNullOrWhiteSpace(shortLinkOptions.ShortHost))
+    app.MapShortLinks(shortLinkOptions.ShortHost, shortLinkOptions.CanonicalBaseUrl);
 
 app.MapFallbackToFile("index.html")
     .AllowAnonymous();

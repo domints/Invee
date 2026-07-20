@@ -5,6 +5,7 @@ using System.Linq;
 using System.Security.Claims;
 using System.Text;
 using System.Threading.Tasks;
+using Invee.Api.Configuration;
 using Invee.Api.Models;
 using Invee.Application.Models;
 using Invee.Application.Queries;
@@ -16,17 +17,18 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 
 namespace Invee.Api.Endpoints
 {
-    public record HealthResponse(string Status, string Database, string Version);
+    public record HealthResponse(string Status, string Database, string Version, string ShortHost, string CanonicalBaseUrl);
 
     public static class Api
     {
         public static RouteGroupBuilder MapApis(this RouteGroupBuilder group)
         {
-            group.MapGet("/health", async (InveeContext db, IWebHostEnvironment env, CancellationToken ct) =>
+            group.MapGet("/health", async (InveeContext db, IWebHostEnvironment env, IOptions<ShortLinkOptions> shortLinks, CancellationToken ct) =>
             {
                 string dbStatus;
                 try
@@ -45,7 +47,12 @@ namespace Invee.Api.Endpoints
                     : "unknown";
 
                 var overallStatus = dbStatus == "ok" ? "ok" : "degraded";
-                return Results.Ok(new HealthResponse(overallStatus, dbStatus, version));
+                return Results.Ok(new HealthResponse(
+                    overallStatus,
+                    dbStatus,
+                    version,
+                    shortLinks.Value.ShortHost,
+                    shortLinks.Value.CanonicalBaseUrl.TrimEnd('/')));
             }).AllowAnonymous().WithName("GetHealth");
 
             group.MapGet("/auth/mobile-token",

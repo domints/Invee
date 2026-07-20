@@ -24,6 +24,7 @@ import { useRoute, useRouter } from 'vue-router';
 import { useUserStore } from '@/stores/user';
 import { slugId } from '@/utils';
 import ImageGallery from '@/components/ImageGallery.vue';
+import OpenInAppButton from '@/components/OpenInAppButton.vue';
 
 const route = useRoute();
 const router = useRouter();
@@ -301,10 +302,13 @@ const expiryWarning = inNDays(7);
                     <span v-for="tag in item.tags" :key="tag" class="tag">{{ tag }}</span>
                 </div>
             </div>
-            <el-button v-if="userStore.loggedIn" type="primary" plain
-                @click="router.push({ name: 'item-edit', params: { id: itemId } })">
-                Edit
-            </el-button>
+            <div class="header-actions">
+                <OpenInAppButton kind="item" :slug="item.slug" />
+                <el-button v-if="userStore.loggedIn" type="primary" plain
+                    @click="router.push({ name: 'item-edit', params: { id: itemId } })">
+                    Edit
+                </el-button>
+            </div>
         </div>
 
         <!-- Info section -->
@@ -527,6 +531,13 @@ const expiryWarning = inNDays(7);
         .back-btn {
             flex-shrink: 0;
             margin-top: 0.2rem;
+        }
+
+        .header-actions {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            flex-shrink: 0;
         }
 
         .header-main {

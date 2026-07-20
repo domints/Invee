@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:developer' as dev;
 
+import 'package:app_links/app_links.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
@@ -13,6 +14,7 @@ import 'screens/item_detail_screen.dart';
 import 'screens/main_shell.dart';
 import 'screens/qr_scanner_screen.dart';
 import 'screens/setup_screen.dart';
+import 'screens/storage_detail_screen.dart';
 import 'services/api_service.dart';
 import 'services/auth_service.dart';
 import 'services/preferences_service.dart';
@@ -68,6 +70,12 @@ class _AppEntryState extends State<_AppEntry> {
   Widget? _home;
   StreamSubscription<dynamic>? _scanSub;
 
+  /// Deep-link (invee:// custom scheme) handling.
+  StreamSubscription<Uri>? _linkSub;
+
+  /// A link received before the api/session was ready; processed once connected.
+  Uri? _pendingLink;
+
   /// Whether the setup screen is currently active.
   bool _isSetup = false;
 
@@ -87,6 +95,83 @@ class _AppEntryState extends State<_AppEntry> {
       onError: (_) {},
     );
     _init();
+    _initDeepLinks();
+  }
+
+  /// Subscribes to `invee://` custom-scheme links used for short-link handoff
+  /// from the phone's browser (e.g. `invee://item?slug=bosch-gbh-228-f`).
+  Future<void> _initDeepLinks() async {
+    final appLinks = AppLinks();
+    try {
+      final initial = await appLinks.getInitialLink();
+      if (initial != null) _handleIncomingLink(initial);
+    } catch (_) {}
+    _linkSub = appLinks.uriLinkStream.listen(_handleIncomingLink, onError: (_) {});
+  }
+
+  void _handleIncomingLink(Uri uri) {
+    if (uri.scheme != 'invee') return;
+    final api = _api;
+    if (api == null) {
+      // Buffer until the app is connected and authenticated.
+      _pendingLink = uri;
+      return;
+    }
+    _resolveAndNavigate(api, uri);
+  }
+
+  /// Processes a buffered link once [_api] is available and a navigable shell
+  /// is mounted.
+  void _processPendingLink() {
+    final pending = _pendingLink;
+    final api = _api;
+    if (pending == null || api == null) return;
+    _pendingLink = null;
+    WidgetsBinding.instance.addPostFrameCallback(
+      (_) => _resolveAndNavigate(api, pending),
+    );
+  }
+
+  /// Resolves the slug encoded in [uri] to an item (preferred) or storage and
+  /// navigates to the matching detail screen. Silently ignores unresolved links.
+  Future<void> _resolveAndNavigate(ApiService api, Uri uri) async {
+    final slug = uri.queryParameters['slug']?.trim();
+    if (slug == null || slug.isEmpty) return;
+    final kind = uri.host;
+
+    Future<void> pushStorage() async {
+      final storage = await api.getStorageBySlug(slug);
+      _navigatorKey.currentState?.push(
+        MaterialPageRoute(
+          builder: (_) => StorageDetailScreen(
+            storageId: storage.id,
+            storageName: storage.name,
+            apiService: api,
+          ),
+        ),
+      );
+    }
+
+    try {
+      if (kind == 'storage') {
+        await pushStorage();
+        return;
+      }
+      // 'item' (or unspecified): try item first, then fall back to storage.
+      try {
+        final item = await api.getItemBySlug(slug);
+        _navigatorKey.currentState?.push(
+          MaterialPageRoute(
+            builder: (_) => ItemDetailScreen(itemId: item.id, apiService: api),
+          ),
+        );
+      } on ApiException catch (e) {
+        if (e.statusCode != 404) rethrow;
+        await pushStorage();
+      }
+    } catch (_) {
+      // Unresolved link — ignore.
+    }
   }
 
   Future<void> _init() async {
@@ -116,6 +201,11 @@ class _AppEntryState extends State<_AppEntry> {
       return;
     }
 
+    await PreferencesService.setShortLinkConfig(
+      shortHost: health.shortHost,
+      canonicalBaseUrl: health.canonicalBaseUrl,
+    );
+
     final authed = await api.verifyAuth();
     if (!mounted) return;
 
@@ -131,6 +221,7 @@ class _AppEntryState extends State<_AppEntry> {
         _home = MainShell(apiService: api);
         _ready = true;
       });
+      _processPendingLink();
     }
   }
 
@@ -152,6 +243,7 @@ class _AppEntryState extends State<_AppEntry> {
           _isSetup = false;
           _home = MainShell(apiService: api);
         });
+        _processPendingLink();
       },
     );
   }
@@ -315,6 +407,7 @@ class _AppEntryState extends State<_AppEntry> {
   @override
   void dispose() {
     _scanSub?.cancel();
+    _linkSub?.cancel();
     _externalScanUrl.dispose();
     super.dispose();
   }
